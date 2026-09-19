@@ -1,0 +1,47 @@
+{
+  "departments": [
+    { "id": "CSE", "name": "Computer Science & Engineering" },
+    { "id": "AIDS", "name": "AI & Data Science" },
+    { "id": "IT", "name": "Information Technology" },
+    { "id": "ECE", "name": "Electronics & Communication" }
+  ],
+  "subjects": [
+    { "id": "sub-ds", "name": "Data Structures", "code": "DS", "dept": "CSE", "sem": 3, "weeklyHours": 4, "isLab": false, "credits": 3 },
+    { "id": "sub-java", "name": "Java Programming", "code": "JAVA", "dept": "CSE", "sem": 3, "weeklyHours": 4, "isLab": false, "credits": 3 },
+    { "id": "sub-ml", "name": "Machine Learning", "code": "ML", "dept": "AIDS", "sem": 3, "weeklyHours": 4, "isLab": false, "credits": 3 },
+    { "id": "sub-cn", "name": "Computer Networks", "code": "CN", "dept": "IT", "sem": 5, "weeklyHours": 4, "isLab": false, "credits": 3 },
+    { "id": "sub-dsp", "name": "Digital Signal Processing", "code": "DSP", "dept": "ECE", "sem": 5, "weeklyHours": 4, "isLab": false, "credits": 3 }
+  ],
+  "faculty": [
+    {
+      "id": "fac-1",
+      "name": "Dr. A. Sharma",
+      "dept": "CSE",
+      "subjects": ["sub-ds"],
+      "availDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+      "preference": "Morning",
+      "maxHoursWeek": 18,
+      "unavailable": []
+    },
+    {
+      "id": "fac-2",
+      "name": "Prof. R. Mehta",
+      "dept": "CSE",
+      "subjects": ["sub-java"],
+      "availDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+      "preference": "Any",
+      "maxHoursWeek": 18,
+      "unavailable": []
+    },
+    {
+      "id": "fac-3",
+      "name": "Dr. N. Kulkarni",
+      "dept": "AIDS",
+      "subjects": ["sub-ml"],
+      "availDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+      "preference": "Afternoon",
+      "maxHoursWeek": 18,
+      "unavailable": []
+    }
+  ]
+}

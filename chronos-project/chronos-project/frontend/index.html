@@ -1,0 +1,2534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chronos &middot; Smart Academic Timetable AI</title>
+<style>
+/* ============================================================
+   TOKENS
+============================================================= */
+:root{
+  --bg:#F5F6FA;
+  --surface:#FFFFFF;
+  --surface-alt:#F0F1F7;
+  --border:#DFE2EC;
+  --text:#1C2033;
+  --text-dim:#6B7086;
+  --text-faint:#9DA1B5;
+  --primary:#2B3A67;
+  --primary-light:#3E5290;
+  --primary-dim:#EBEEF6;
+  --accent:#D6952F;
+  --accent-light:#F4C878;
+  --accent-dim:#FBF0DC;
+  --success:#3F9469;
+  --success-dim:#E5F4EC;
+  --danger:#C1553B;
+  --danger-dim:#FBEAE5;
+  --warning:#B9871F;
+  --warning-dim:#FBF1DC;
+  --info:#3C6E9C;
+  --info-dim:#E7F0F8;
+  --radius-s:4px;
+  --radius-m:8px;
+  --shadow:0 1px 2px rgba(20,24,45,.06), 0 1px 1px rgba(20,24,45,.04);
+  --shadow-lift:0 8px 24px rgba(20,24,45,.14);
+  --font-head:'Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --sidebar-w:248px;
+}
+html[data-theme="dark"]{
+  --bg:#12141F;
+  --surface:#191C2B;
+  --surface-alt:#20233370;
+  --surface-alt:#20233A;
+  --border:#2C304533;
+  --border:#2E324A;
+  --text:#E7E8F2;
+  --text-dim:#A2A6C0;
+  --text-faint:#6C7091;
+  --primary:#5670B8;
+  --primary-light:#7189D1;
+  --primary-dim:#232B4A;
+  --accent:#E5AC49;
+  --accent-light:#F4C878;
+  --accent-dim:#332A16;
+  --success:#59B586;
+  --success-dim:#16281F;
+  --danger:#E07C61;
+  --danger-dim:#301E1A;
+  --warning:#D9A73F;
+  --warning-dim:#2E2612;
+  --info:#6FA6D6;
+  --info-dim:#182635;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+  --shadow-lift:0 12px 30px rgba(0,0,0,.5);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:14.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  transition:background .25s ease,color .25s ease;
+}
+h1,h2,h3,h4{font-family:var(--font-head);font-weight:600;margin:0 0 4px;color:var(--text);}
+p{margin:0 0 8px;}
+a{color:inherit;}
+button{font-family:var(--font-body);}
+::selection{background:var(--accent-dim);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.scrollbar::-webkit-scrollbar{width:8px;height:8px;}
+.scrollbar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ============================================================
+   LAYOUT
+============================================================= */
+#app{display:flex;min-height:100vh;}
+
+/* ---- Sidebar ---- */
+#sidebar{
+  width:var(--sidebar-w);
+  flex:0 0 var(--sidebar-w);
+  background:var(--primary);
+  color:#E9ECF7;
+  display:flex;
+  flex-direction:column;
+  position:sticky;top:0;height:100vh;
+  z-index:40;
+  transition:transform .3s ease;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  padding:20px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(160deg,var(--accent),var(--accent-light));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-weight:700;color:#2A1E05;font-size:17px;
+  flex:0 0 auto;
+}
+.brand-text .t1{font-family:var(--font-head);font-size:17px;font-weight:700;line-height:1.1;color:#fff;}
+.brand-text .t2{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.02em;}
+
+#navlist{list-style:none;margin:0;padding:10px 10px 10px;overflow-y:auto;flex:1;}
+#navlist li{margin:2px 0;}
+.navlink{
+  display:flex;align-items:center;gap:11px;
+  padding:9px 12px;border-radius:7px;cursor:pointer;
+  color:rgba(233,236,247,.78);font-size:13.6px;font-weight:500;
+  border-left:3px solid transparent;
+  transition:background .15s ease,color .15s ease;
+  user-select:none;
+}
+.navlink .ic{width:18px;text-align:center;font-size:14px;opacity:.9;}
+.navlink:hover{background:rgba(255,255,255,.08);color:#fff;}
+.navlink.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--accent);}
+.nav-group-label{padding:14px 14px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.38);}
+
+.sidebar-foot{
+  padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);
+  font-size:11.5px;color:rgba(255,255,255,.5);
+}
+
+/* ---- Main ---- */
+#main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;}
+#topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:14px;
+  padding:12px 24px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+#menuToggle{display:none;background:none;border:1px solid var(--border);border-radius:7px;width:34px;height:34px;cursor:pointer;color:var(--text);}
+.pagetitle{font-family:var(--font-head);font-size:20px;font-weight:700;flex:0 0 auto;}
+.searchwrap{
+  flex:1;max-width:380px;display:flex;align-items:center;gap:8px;
+  background:var(--surface-alt);border:1px solid var(--border);
+  border-radius:7px;padding:7px 12px;color:var(--text-dim);
+}
+.searchwrap input{border:none;background:none;outline:none;flex:1;color:var(--text);font-size:13.5px;}
+.top-actions{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.iconbtn{
+  position:relative;width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;
+  transition:background .15s,color .15s;
+}
+.iconbtn:hover{background:var(--surface-alt);color:var(--text);}
+.badge-dot{position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--surface);}
+.avatar{
+  width:34px;height:34px;border-radius:50%;background:var(--accent-dim);color:var(--warning);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:1px solid var(--border);
+}
+
+#content{padding:22px 26px 60px;flex:1;}
+.page{display:none;animation:fadeUp .35s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ============================================================
+   COMPONENTS
+============================================================= */
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+.section-head h1{font-size:23px;}
+.section-sub{color:var(--text-dim);font-size:13px;}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  border-radius:7px;border:1px solid var(--border);background:var(--surface);
+  color:var(--text);padding:8px 14px;font-size:13.3px;font-weight:600;cursor:pointer;
+  transition:transform .1s ease, background .15s, box-shadow .15s;
+  white-space:nowrap;
+}
+.btn:hover{background:var(--surface-alt);}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-light);}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#2A1E05;}
+.btn-accent:hover{background:var(--accent-light);}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+.btn-ghost{background:transparent;border-color:transparent;}
+.btn-ghost:hover{background:var(--surface-alt);}
+.btn-sm{padding:5px 10px;font-size:12.2px;border-radius:6px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+.grid{display:grid;gap:16px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}}
+
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
+  padding:16px 18px;box-shadow:var(--shadow);
+}
+.card h3{font-size:14.5px;}
+
+.stat{
+  background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);
+  border-radius:var(--radius-m);padding:14px 16px;box-shadow:var(--shadow);
+}
+.stat .label{font-size:12px;color:var(--text-dim);text-transform:none;}
+.stat .value{font-family:var(--font-head);font-size:26px;font-weight:700;margin-top:2px;}
+.stat .delta{font-size:11.5px;margin-top:4px;}
+.stat .delta.up{color:var(--success);}
+.stat .delta.down{color:var(--danger);}
+.stat.s-primary{border-left-color:var(--primary);}
+.stat.s-success{border-left-color:var(--success);}
+.stat.s-danger{border-left-color:var(--danger);}
+.stat.s-info{border-left-color:var(--info);}
+
+table{width:100%;border-collapse:collapse;font-size:13.2px;}
+thead th{
+  text-align:left;padding:9px 10px;color:var(--text-dim);font-weight:600;font-size:11.6px;
+  text-transform:none;border-bottom:1px solid var(--border);background:var(--surface-alt);
+}
+thead th:first-child{border-top-left-radius:6px;}
+thead th:last-child{border-top-right-radius:6px;}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:hover{background:var(--surface-alt);}
+.table-wrap{overflow-x:auto;border-radius:var(--radius-m);border:1px solid var(--border);}
+.table-wrap table{border:none;}
+.table-wrap thead th{border-radius:0;}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.3px;font-weight:600;}
+.pill-success{background:var(--success-dim);color:var(--success);}
+.pill-danger{background:var(--danger-dim);color:var(--danger);}
+.pill-warning{background:var(--warning-dim);color:var(--warning);}
+.pill-info{background:var(--info-dim);color:var(--info);}
+.pill-muted{background:var(--surface-alt);color:var(--text-dim);}
+
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
+.field input[type=text],.field input[type=number],.field input[type=email],.field input[type=time],
+.field select,.field textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);
+  color:var(--text);font-size:13.3px;font-family:var(--font-body);
+}
+html[data-theme="dark"] .field input,html[data-theme="dark"] .field select,html[data-theme="dark"] .field textarea{background:var(--surface-alt);}
+.field textarea{resize:vertical;min-height:64px;}
+.checkrow{display:flex;align-items:center;gap:7px;font-size:13px;margin:4px 0;}
+.chiplist{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{
+  padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface-alt);
+  font-size:12px;cursor:pointer;user-select:none;color:var(--text-dim);
+}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,17,28,.55);display:none;align-items:center;justify-content:center;
+  z-index:100;padding:20px;backdrop-filter:blur(1px);
+}
+.modal-overlay.show{display:flex;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--surface);border-radius:12px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
+  box-shadow:var(--shadow-lift);border:1px solid var(--border);
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.modal-head h3{font-size:16px;}
+.modal-body{padding:18px 20px;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.modal-x{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);}
+
+/* Toast */
+#toastHost{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  min-width:260px;max-width:340px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--primary);
+  border-radius:8px;padding:11px 14px;box-shadow:var(--shadow-lift);font-size:13px;
+  animation:slideIn .25s ease;
+}
+.toast.success{border-left-color:var(--success);}
+.toast.danger{border-left-color:var(--danger);}
+.toast.warning{border-left-color:var(--warning);}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.toast b{display:block;margin-bottom:2px;}
+
+/* Notif dropdown */
+.dropdown{
+  position:absolute;top:46px;right:0;width:320px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;box-shadow:var(--shadow-lift);z-index:60;display:none;overflow:hidden;
+}
+.dropdown.show{display:block;}
+.dropdown-head{padding:11px 14px;font-weight:700;border-bottom:1px solid var(--border);font-size:13px;}
+.dropdown-item{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.6px;cursor:default;}
+.dropdown-item:last-child{border-bottom:none;}
+.dropdown-item .ttl{font-weight:600;margin-bottom:2px;}
+.dropdown-item .meta{color:var(--text-faint);font-size:11px;}
+.rel{position:relative;}
+
+/* Timetable grid */
+.tt-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+.tt-toolbar select{padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;}
+.tt-grid{width:100%;border-collapse:separate;border-spacing:0;font-size:12.2px;}
+.tt-grid th{background:var(--surface-alt);padding:8px 6px;font-size:11px;color:var(--text-dim);border:1px solid var(--border);}
+.tt-grid td{border:1px solid var(--border);padding:4px;vertical-align:top;height:64px;width:13%;}
+.tt-grid td.daycell{background:var(--surface-alt);text-align:center;font-weight:700;color:var(--text-dim);width:70px;}
+.tt-cell{
+  height:100%;min-height:56px;border-radius:6px;padding:6px 7px;cursor:grab;
+  display:flex;flex-direction:column;justify-content:center;gap:1px;
+  font-size:11.6px;transition:transform .12s ease, box-shadow .12s ease;
+}
+.tt-cell:active{cursor:grabbing;}
+.tt-cell.dragover{outline:2px dashed var(--accent);}
+.tt-cell .sub{font-weight:700;color:var(--text);}
+.tt-cell .fac{color:var(--text-dim);}
+.tt-cell .room{color:var(--text-faint);font-size:10.6px;}
+.tt-empty{height:100%;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;}
+.tt-cell.conflict{outline:2px solid var(--danger);}
+.tt-cell.lab{border-left:3px solid var(--info);}
+
+/* AI chat */
+.ai-wrap{display:grid;grid-template-columns:1fr 300px;gap:16px;}
+@media(max-width:900px){.ai-wrap{grid-template-columns:1fr;}}
+#chatLog{height:480px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.msg{max-width:80%;padding:10px 13px;border-radius:12px;font-size:13.3px;line-height:1.5;}
+.msg.bot{background:var(--surface-alt);align-self:flex-start;border-bottom-left-radius:2px;}
+.msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:2px;}
+.msg.bot b{color:var(--primary);}
+html[data-theme=dark] .msg.bot b{color:var(--accent-light);}
+.chat-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);}
+.chat-input-row input{flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);}
+.suggest-chip{display:block;width:100%;text-align:left;padding:9px 11px;margin-bottom:7px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12.3px;color:var(--text-dim);}
+.suggest-chip:hover{background:var(--surface-alt);color:var(--text);}
+
+/* progress bar */
+.bar-track{height:7px;border-radius:4px;background:var(--surface-alt);overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);}
+
+/* wizard */
+.steps{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+.step-pill{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--surface-alt);color:var(--text-dim);border:1px solid var(--border);}
+.step-pill.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.step-pill.done{background:var(--success-dim);color:var(--success);border-color:transparent;}
+
+.tag-remove{margin-left:5px;cursor:pointer;font-weight:700;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-dim);}
+.empty-state .ic{font-size:30px;margin-bottom:10px;}
+
+.hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.small{font-size:11.8px;color:var(--text-faint);}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.canvaswrap{width:100%;overflow-x:auto;}
+canvas{max-width:100%;}
+
+/* Responsive sidebar */
+@media(max-width:960px){
+  #sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);box-shadow:var(--shadow-lift);}
+  #sidebar.open{transform:translateX(0);}
+  #menuToggle{display:flex;align-items:center;justify-content:center;}
+  .pagetitle{font-size:17px;}
+  .searchwrap{display:none;}
+}
+@media print{
+  #sidebar,#topbar,.no-print{display:none !important;}
+  #content{padding:0;}
+  body{background:#fff;color:#000;}
+  .page{display:none !important;}
+  .page.print-active{display:block !important;}
+  .card{box-shadow:none;border:1px solid #999;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div class="brand-text">
+        <div class="t1">Chronos</div>
+        <div class="t2">Academic Timetable AI</div>
+      </div>
+    </div>
+    <ul id="navlist" class="scrollbar"></ul>
+    <div class="sidebar-foot">v1.0 &middot; Local demo build<br>Ready for Spring Boot + PostgreSQL API</div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div id="main">
+    <div id="topbar">
+      <button id="menuToggle" aria-label="Toggle menu">&#9776;</button>
+      <div class="pagetitle" id="pageTitle">Dashboard</div>
+      <div class="searchwrap">
+        <span>&#128269;</span>
+        <input id="globalSearch" type="text" placeholder="Search faculty, subjects, rooms, divisions&hellip;">
+      </div>
+      <div class="top-actions">
+        <button class="iconbtn" id="themeToggle" title="Toggle light/dark">&#9788;</button>
+        <div class="rel">
+          <button class="iconbtn" id="notifBtn" title="Notifications">&#128276;<span class="badge-dot" id="notifDot"></span></button>
+          <div class="dropdown" id="notifDropdown">
+            <div class="dropdown-head">Notifications</div>
+            <div id="notifList"></div>
+          </div>
+        </div>
+        <div class="avatar" title="Admin User">AU</div>
+      </div>
+    </div>
+
+    <div id="content" class="scrollbar"></div>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+
+<!-- Generic Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <div class="modal-head">
+      <h3 id="modalTitle">Title</h3>
+      <button class="modal-x" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================================================================
+   SMART ACADEMIC TIMETABLE AI — single-file demo application
+   Structure kept modular so a future backend (Spring Boot +
+   PostgreSQL) and a real AI API can be dropped in behind the
+   DataService / AIService interfaces below. NO API key is ever
+   embedded here — AIService.callBackend() is a stub to be wired
+   to a secure server endpoint later.
+================================================================ */
+
+/* ---------------------------------------------------------------
+   1. CONSTANTS
+---------------------------------------------------------------- */
+const NAV = [
+  {group:"Overview", items:[
+    {id:"dashboard", label:"Dashboard", ic:"&#128202;"},
+  ]},
+  {group:"Scheduling", items:[
+    {id:"timetable", label:"Timetable", ic:"&#128197;"},
+    {id:"generator", label:"Timetable Generator", ic:"&#9881;"},
+    {id:"conflicts", label:"Conflict Detection", ic:"&#9888;"},
+    {id:"whatif", label:"What-If Simulator", ic:"&#128172;"},
+    {id:"exams", label:"Exam Scheduler", ic:"&#128221;"},
+  ]},
+  {group:"Master Data", items:[
+    {id:"faculty", label:"Faculty Management", ic:"&#128100;"},
+    {id:"subjects", label:"Subjects", ic:"&#128218;"},
+    {id:"classes", label:"Classes / Divisions", ic:"&#127979;"},
+    {id:"rooms", label:"Rooms & Labs", ic:"&#127968;"},
+    {id:"constraints", label:"Constraints", ic:"&#128274;"},
+  ]},
+  {group:"Insights", items:[
+    {id:"workload", label:"Faculty Workload", ic:"&#128203;"},
+    {id:"analytics", label:"Analytics", ic:"&#128200;"},
+  ]},
+  {group:"Assistant", items:[
+    {id:"ai", label:"AI Assistant", ic:"&#129302;"},
+    {id:"settings", label:"Settings", ic:"&#9881;&#65039;"},
+  ]},
+];
+
+const STORAGE_KEY = "chronos_ttai_db_v1";
+
+/* ---------------------------------------------------------------
+   1b. BACKEND API (Faculty)
+   Faculty records are persisted on the backend (see /backend) instead
+   of localStorage only. If the backend is unreachable, Chronos falls
+   back to whatever faculty data is already cached locally so the UI
+   keeps working offline.
+---------------------------------------------------------------- */
+const API_BASE = (window.CHRONOS_API_BASE) || "http://localhost:4000/api";
+
+const FacultyAPI = {
+  async list(){
+    const res = await fetch(`${API_BASE}/faculty`);
+    if(!res.ok) throw new Error("Failed to load faculty from backend.");
+    return res.json();
+  },
+  async create(payload){
+    const res = await fetch(`${API_BASE}/faculty`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || "Failed to create faculty.");
+    }
+    return res.json();
+  },
+  async update(id, payload){
+    const res = await fetch(`${API_BASE}/faculty/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || "Failed to update faculty.");
+    }
+    return res.json();
+  },
+  async remove(id){
+    const res = await fetch(`${API_BASE}/faculty/${id}`, { method: "DELETE" });
+    if(!res.ok && res.status !== 404) throw new Error("Failed to delete faculty.");
+  },
+};
+
+/* ---------------------------------------------------------------
+   2. DATA SERVICE  (swap internals for a REST client later)
+---------------------------------------------------------------- */
+const DataService = (function(){
+  function emptyDB(){
+    return {
+      meta:{ orgName:"Chronos Institute of Technology", workingDays:["Mon","Tue","Wed","Thu","Fri","Sat"],
+             periods:[
+               {id:"P1",label:"P1",start:"09:00",end:"09:55"},
+               {id:"P2",label:"P2",start:"09:55",end:"10:50"},
+               {id:"BRK",label:"Break",start:"10:50",end:"11:05",isBreak:true},
+               {id:"P3",label:"P3",start:"11:05",end:"12:00"},
+               {id:"P4",label:"P4",start:"12:00",end:"12:55"},
+               {id:"LUNCH",label:"Lunch",start:"12:55",end:"13:40",isBreak:true},
+               {id:"P5",label:"P5",start:"13:40",end:"14:35"},
+               {id:"P6",label:"P6",start:"14:35",end:"15:30"},
+               {id:"P7",label:"P7",start:"15:30",end:"16:25"},
+             ],
+             theme:"light", maxConsecutive:3 },
+      departments:[], divisions:[], subjects:[], faculty:[], rooms:[],
+      timetables:{}, // divisionId -> {day:{periodId:{subjectId,facultyId,roomId}}}
+      generatedOptions:[], activeOptionId:null,
+      exams:[], invigilators:[],
+      constraints:{
+        soft:[
+          {id:"pref", label:"Faculty teaching-time preferences", weight:70},
+          {id:"balance", label:"Faculty workload balance", weight:85},
+          {id:"gaps", label:"Minimise student free periods", weight:60},
+          {id:"spread", label:"Even subject distribution across week", weight:65},
+          {id:"roomuse", label:"Maximise room utilisation", weight:50},
+          {id:"consec", label:"Limit consecutive lectures (same subject)", weight:75},
+        ]
+      },
+      auditLog:[], versions:[],
+      notifications:[],
+      whatifLog:[],
+    };
+  }
+  let db = null;
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      db = raw ? JSON.parse(raw) : emptyDB();
+    }catch(e){ db = emptyDB(); }
+    if(!db.meta) db = emptyDB();
+    return db;
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }catch(e){ console.warn("save failed", e); }
+  }
+  function get(){ return db; }
+  function reset(){ db = emptyDB(); save(); }
+  function loadDemo(){ db = DemoData.build(); save(); }
+  function log(action, details){
+    db.auditLog.unshift({ts:new Date().toISOString(), action, details});
+    if(db.auditLog.length>300) db.auditLog.pop();
+  }
+  function notify(title, meta, type){
+    db.notifications.unshift({id:uid(), title, meta, type:type||"info", time:new Date().toISOString(), read:false});
+    if(db.notifications.length>80) db.notifications.pop();
+  }
+  return {load, save, get, reset, loadDemo, log, notify};
+})();
+
+function uid(){ return 'id' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(t){ return t; }
+function byId(arr,id){ return arr.find(x=>x.id===id); }
+
+/* ---------------------------------------------------------------
+   3. DEMO DATA
+---------------------------------------------------------------- */
+const DemoData = (function(){
+  function build(){
+    const db = DataService.get ? null : null; // placeholder
+    const D = {
+      meta:{ orgName:"Chronos Institute of Technology", workingDays:["Mon","Tue","Wed","Thu","Fri","Sat"],
+        periods:[
+          {id:"P1",label:"P1",start:"09:00",end:"09:55"},
+          {id:"P2",label:"P2",start:"09:55",end:"10:50"},
+          {id:"BRK",label:"Break",start:"10:50",end:"11:05",isBreak:true},
+          {id:"P3",label:"P3",start:"11:05",end:"12:00"},
+          {id:"P4",label:"P4",start:"12:00",end:"12:55"},
+          {id:"LUNCH",label:"Lunch",start:"12:55",end:"13:40",isBreak:true},
+          {id:"P5",label:"P5",start:"13:40",end:"14:35"},
+          {id:"P6",label:"P6",start:"14:35",end:"15:30"},
+          {id:"P7",label:"P7",start:"15:30",end:"16:25"},
+        ], theme:"light", maxConsecutive:3 },
+      departments:[
+        {id:"CSE", name:"Computer Science & Engineering"},
+        {id:"AIDS", name:"AI & Data Science"},
+        {id:"IT", name:"Information Technology"},
+        {id:"ECE", name:"Electronics & Communication"},
+      ],
+      divisions:[
+        {id:uid(), name:"CSE-3A", dept:"CSE", sem:3, strength:64},
+        {id:uid(), name:"CSE-3B", dept:"CSE", sem:3, strength:60},
+        {id:uid(), name:"AIDS-3A", dept:"AIDS", sem:3, strength:58},
+        {id:uid(), name:"IT-5A", dept:"IT", sem:5, strength:55},
+        {id:uid(), name:"ECE-5A", dept:"ECE", sem:5, strength:50},
+      ],
+      rooms:[
+        {id:uid(), name:"R-101", type:"room", capacity:70, dept:"CSE"},
+        {id:uid(), name:"R-102", type:"room", capacity:70, dept:"CSE"},
+        {id:uid(), name:"R-103", type:"room", capacity:65, dept:"AIDS"},
+        {id:uid(), name:"R-104", type:"room", capacity:60, dept:"IT"},
+        {id:uid(), name:"R-105", type:"room", capacity:55, dept:"ECE"},
+        {id:uid(), name:"R-201", type:"room", capacity:65, dept:"CSE"},
+        {id:uid(), name:"R-202", type:"room", capacity:60, dept:"IT"},
+        {id:uid(), name:"R-203", type:"room", capacity:60, dept:"AIDS"},
+        {id:uid(), name:"R-204", type:"room", capacity:60, dept:"ECE"},
+        {id:uid(), name:"R-301", type:"room", capacity:80, dept:"CSE"},
+        {id:uid(), name:"Lab-1 (Programming)", type:"lab", capacity:35, dept:"CSE"},
+        {id:uid(), name:"Lab-2 (AI/ML)", type:"lab", capacity:32, dept:"AIDS"},
+        {id:uid(), name:"Lab-3 (Networks)", type:"lab", capacity:30, dept:"IT"},
+        {id:uid(), name:"Lab-4 (Electronics)", type:"lab", capacity:30, dept:"ECE"},
+      ],
+      subjects:[],
+      faculty:[],
+      timetables:{}, generatedOptions:[], activeOptionId:null,
+      exams:[], invigilators:[],
+      constraints:{ soft:[
+        {id:"pref", label:"Faculty teaching-time preferences", weight:70},
+        {id:"balance", label:"Faculty workload balance", weight:85},
+        {id:"gaps", label:"Minimise student free periods", weight:60},
+        {id:"spread", label:"Even subject distribution across week", weight:65},
+        {id:"roomuse", label:"Maximise room utilisation", weight:50},
+        {id:"consec", label:"Limit consecutive lectures (same subject)", weight:75},
+      ]},
+      auditLog:[], versions:[], notifications:[], whatifLog:[],
+    };
+
+    const subjectSeed = [
+      ["Data Structures","DS","CSE",3,4,false],
+      ["Java Programming","JAVA","CSE",3,4,false],
+      ["Java Programming Lab","JAVAL","CSE",3,2,true],
+      ["Discrete Mathematics","DM","CSE",3,3,false],
+      ["Digital Logic Design","DLD","CSE",3,3,false],
+      ["DS Lab","DSL","CSE",3,2,true],
+      ["Machine Learning","ML","AIDS",3,4,false],
+      ["ML Lab","MLL","AIDS",3,2,true],
+      ["Statistics for AI","STAT","AIDS",3,3,false],
+      ["Python Programming","PY","AIDS",3,3,false],
+      ["Python Lab","PYL","AIDS",3,2,true],
+      ["Computer Networks","CN","IT",5,4,false],
+      ["CN Lab","CNL","IT",5,2,true],
+      ["Operating Systems","OS","IT",5,4,false],
+      ["Web Technologies","WT","IT",5,3,false],
+      ["Digital Signal Processing","DSP","ECE",5,4,false],
+      ["Microprocessors","MP","ECE",5,3,false],
+      ["Microprocessor Lab","MPL","ECE",5,2,true],
+      ["Communication Systems","COMS","ECE",5,3,false],
+    ];
+    subjectSeed.forEach(s=>{
+      D.subjects.push({id:uid(), name:s[0], code:s[1], dept:s[2], sem:s[3], weeklyHours:s[4], isLab:s[5], credits:s[5]?1:3});
+    });
+
+    const facultySeed = [
+      ["Dr. A. Sharma","CSE",["DS","DSL"], ["Mon","Tue","Wed","Thu","Fri"], "Morning"],
+      ["Prof. R. Mehta","CSE",["JAVA","JAVAL"], ["Mon","Tue","Wed","Thu","Fri"], "Any"],
+      ["Dr. S. Iyer","CSE",["DM"], ["Mon","Wed","Fri"], "Morning"],
+      ["Prof. K. Verma","CSE",["DLD"], ["Tue","Wed","Thu","Fri"], "Any"],
+      ["Dr. N. Kulkarni","AIDS",["ML","MLL"], ["Mon","Tue","Wed","Thu","Fri"], "Afternoon"],
+      ["Prof. P. Nair","AIDS",["STAT"], ["Mon","Tue","Thu","Fri"], "Morning"],
+      ["Dr. M. Joshi","AIDS",["PY","PYL"], ["Mon","Tue","Wed","Thu"], "Any"],
+      ["Prof. V. Rao","IT",["CN","CNL"], ["Mon","Tue","Wed","Thu","Fri"], "Any"],
+      ["Dr. T. Bose","IT",["OS"], ["Mon","Wed","Thu","Fri"], "Afternoon"],
+      ["Prof. L. Menon","IT",["WT"], ["Tue","Wed","Thu","Fri"], "Any"],
+      ["Dr. H. Pillai","ECE",["DSP"], ["Mon","Tue","Wed","Fri"], "Morning"],
+      ["Prof. G. Das","ECE",["MP","MPL"], ["Mon","Tue","Wed","Thu","Fri"], "Any"],
+      ["Dr. Y. Chatterjee","ECE",["COMS"], ["Mon","Tue","Thu","Fri"], "Afternoon"],
+    ];
+    const codeToId = {}; D.subjects.forEach(s=>codeToId[s.code]=s.id);
+    facultySeed.forEach(f=>{
+      D.faculty.push({
+        id:uid(), name:f[0], dept:f[1],
+        subjects:f[2].map(c=>codeToId[c]).filter(Boolean),
+        availDays:f[3], preference:f[4],
+        maxHoursWeek:18, unavailable:[] // {day,periodId}
+      });
+    });
+
+    D.exams = [];
+    D.notifications.push(
+      {id:uid(), title:"Timetable generated", meta:"3 optimized options ready for review", type:"success", time:new Date().toISOString(), read:false},
+      {id:uid(), title:"Faculty unavailability", meta:"Dr. N. Kulkarni marked unavailable Fri P5", type:"warning", time:new Date().toISOString(), read:false},
+      {id:uid(), title:"Room capacity alert", meta:"CSE-3A (64) exceeds Lab-1 capacity (35) — batch split needed", type:"danger", time:new Date().toISOString(), read:false},
+    );
+    D.auditLog.push({ts:new Date().toISOString(), action:"Demo data loaded", details:"Seeded 4 departments, 5 divisions, 19 subjects, 13 faculty, 14 rooms/labs"});
+    return D;
+  }
+  return {build};
+})();
+
+/* ---------------------------------------------------------------
+   4. TIMETABLE GENERATOR  (constraint-based greedy optimizer)
+---------------------------------------------------------------- */
+const Generator = (function(){
+
+  function slotList(meta){
+    return meta.periods.filter(p=>!p.isBreak).map(p=>p.id);
+  }
+
+  function isFacultyAvailable(fac, day, periodId){
+    if(fac.availDays && !fac.availDays.includes(day)) return false;
+    if(fac.unavailable && fac.unavailable.some(u=>u.day===day && u.periodId===periodId)) return false;
+    return true;
+  }
+
+  function pickRoom(rooms, subject, division, usage, day, periodId){
+    const candidates = rooms.filter(r=>{
+      if(subject.isLab && r.type!=="lab") return false;
+      if(!subject.isLab && r.type==="lab") return false;
+      if(r.capacity < division.strength) return false;
+      const key = day+"_"+periodId+"_"+r.id;
+      if(usage.room[key]) return false;
+      return true;
+    });
+    if(!candidates.length) return null;
+    // soft: prefer least-used room so far (room utilisation balance)
+    candidates.sort((a,b)=> (usage.roomCount[a.id]||0) - (usage.roomCount[b.id]||0));
+    return candidates[0];
+  }
+
+  function generateOption(db, seedShuffle){
+    const meta = db.meta;
+    const days = meta.workingDays;
+    const periods = slotList(meta);
+    const usage = { fac:{}, room:{}, div:{}, roomCount:{}, facCount:{}, facLastSlot:{}, subjDay:{} };
+    const timetables = {};
+    const unplaced = [];
+    let softScoreParts = {pref:0,balance:0,gaps:0,spread:0,roomuse:0,consec:0,count:0};
+
+    db.divisions.forEach(div=> timetables[div.id] = {});
+    days.forEach(d=> db.divisions.forEach(div=> timetables[div.id][d] = {}));
+
+    // Build task list: one task per (division, subject, hour-unit)
+    let tasks = [];
+    db.divisions.forEach(div=>{
+      const subs = db.subjects.filter(s=>s.dept===div.dept && s.sem===div.sem);
+      subs.forEach(sub=>{
+        for(let h=0; h<sub.weeklyHours; h++){
+          tasks.push({division:div, subject:sub, seq:h});
+        }
+      });
+    });
+    // shuffle deterministically per seed for variant diversity
+    tasks = shuffle(tasks, seedShuffle);
+    // Prioritize labs first (harder to place), then by fewer eligible faculty
+    tasks.sort((a,b)=>{
+      if(a.subject.isLab !== b.subject.isLab) return a.subject.isLab? -1:1;
+      return 0;
+    });
+
+    tasks.forEach(task=>{
+      const {division, subject} = task;
+      const eligibleFac = db.faculty.filter(f=>f.subjects.includes(subject.id));
+      let placed = false;
+      // build ordered day/period candidates, favor spreading across days (soft: spread)
+      const dayOrder = shuffle(days.slice(), seedShuffle + subject.id.length);
+      for(const day of dayOrder){
+        // skip if subject already twice this day (soft consecutive/spread control)
+        const sdKey = division.id+"_"+subject.id+"_"+day;
+        const countToday = usage.subjDay[sdKey]||0;
+        if(countToday >= 2) continue;
+        for(const pid of periods){
+          const divKey = day+"_"+pid+"_"+division.id;
+          if(usage.div[divKey]) continue; // class conflict
+          for(const fac of eligibleFac){
+            if(!isFacultyAvailable(fac, day, pid)) continue;
+            const facKey = day+"_"+pid+"_"+fac.id;
+            if(usage.fac[facKey]) continue; // faculty conflict
+            const room = pickRoom(db.rooms, subject, division, usage, day, pid);
+            if(!room) continue; // room conflict / capacity / type
+            const facWeek = usage.facCount[fac.id]||0;
+            if(facWeek >= fac.maxHoursWeek) continue;
+
+            // place it
+            usage.fac[facKey]=true; usage.div[divKey]=true;
+            usage.room[day+"_"+pid+"_"+room.id]=true;
+            usage.roomCount[room.id]=(usage.roomCount[room.id]||0)+1;
+            usage.facCount[fac.id]=facWeek+1;
+            usage.subjDay[sdKey]=countToday+1;
+            timetables[division.id][day][pid] = {subjectId:subject.id, facultyId:fac.id, roomId:room.id};
+
+            // soft scoring
+            softScoreParts.count++;
+            if(fac.preference==="Any") softScoreParts.pref+=1;
+            else{
+              const periodObj = meta.periods.find(p=>p.id===pid);
+              const hour = parseInt((periodObj.start||"09").split(":")[0],10);
+              const isMorning = hour < 13;
+              if((fac.preference==="Morning"&&isMorning)||(fac.preference==="Afternoon"&&!isMorning)) softScoreParts.pref+=1;
+            }
+            placed = true;
+            break;
+          }
+          if(placed) break;
+        }
+        if(placed) break;
+      }
+      if(!placed) unplaced.push(task);
+    });
+
+    // compute soft metrics
+    const facHours = {};
+    db.faculty.forEach(f=> facHours[f.id]=usage.facCount[f.id]||0);
+    const hoursArr = Object.values(facHours).filter(h=>h>0);
+    const avg = hoursArr.length? hoursArr.reduce((a,b)=>a+b,0)/hoursArr.length : 0;
+    const variance = hoursArr.length? hoursArr.reduce((a,b)=>a+Math.pow(b-avg,2),0)/hoursArr.length : 0;
+    const balanceScore = Math.max(0, 100 - variance*4);
+
+    const totalRoomSlots = db.rooms.length * days.length * periods.length;
+    const usedRoomSlots = Object.keys(usage.room).length;
+    const roomUtil = totalRoomSlots? (usedRoomSlots/totalRoomSlots*100) : 0;
+
+    let gapPenalty=0, gapCount=0;
+    db.divisions.forEach(div=>{
+      days.forEach(day=>{
+        const used = periods.map(pid=> !!timetables[div.id][day][pid]);
+        let firstIdx = used.indexOf(true), lastIdx = used.lastIndexOf(true);
+        if(firstIdx>-1){
+          for(let i=firstIdx;i<=lastIdx;i++){ if(!used[i]){ gapPenalty++; gapCount++; } }
+        }
+      });
+    });
+    const gapsScore = Math.max(0, 100 - gapPenalty*3);
+
+    const prefScore = softScoreParts.count? (softScoreParts.pref/softScoreParts.count*100) : 100;
+    const consecScore = 100 - Math.min(40, unplaced.length*2);
+    const spreadScore = 100 - Math.min(30, unplaced.length);
+
+    const weights = db.constraints.soft.reduce((m,c)=>{m[c.id]=c.weight;return m;},{});
+    const wsum = Object.values(weights).reduce((a,b)=>a+b,0) || 1;
+    const overall = (
+      prefScore*weights.pref + balanceScore*weights.balance + gapsScore*weights.gaps +
+      spreadScore*weights.spread + roomUtil*weights.roomuse + consecScore*weights.consec
+    ) / wsum;
+
+    return {
+      id: uid(),
+      createdAt: new Date().toISOString(),
+      timetables, unplaced,
+      metrics:{
+        overall: Math.round(overall*10)/10,
+        pref: Math.round(prefScore), balance: Math.round(balanceScore),
+        gaps: Math.round(gapsScore), spread: Math.round(spreadScore),
+        roomuse: Math.round(roomUtil), consec: Math.round(consecScore),
+        placed: softScoreParts.count, total: softScoreParts.count+unplaced.length,
+        facHours
+      }
+    };
+  }
+
+  function shuffle(arr, seed){
+    const a = arr.slice();
+    let s = seed || 1;
+    function rnd(){ s = (s*9301+49297)%233280; return s/233280; }
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(rnd()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function generateMultiple(db, count){
+    const opts = [];
+    for(let i=0;i<count;i++){
+      opts.push(generateOption(db, (i+1)*17 + i));
+    }
+    opts.sort((a,b)=> b.metrics.overall - a.metrics.overall);
+    return opts;
+  }
+
+  return {generateMultiple, generateOption, slotList};
+})();
+
+/* ---------------------------------------------------------------
+   5. CONFLICT DETECTION
+---------------------------------------------------------------- */
+const ConflictEngine = (function(){
+  function detect(db){
+    const conflicts = [];
+    if(!db.timetables || !Object.keys(db.timetables).length) return conflicts;
+    const days = db.meta.workingDays;
+    const periods = Generator.slotList(db.meta);
+    const facMap = {}, roomMap = {};
+    db.divisions.forEach(div=>{
+      const tt = db.timetables[div.id]; if(!tt) return;
+      days.forEach(day=>{
+        periods.forEach(pid=>{
+          const cell = tt[day] && tt[day][pid]; if(!cell) return;
+          const fk = day+"_"+pid+"_"+cell.facultyId;
+          const rk = day+"_"+pid+"_"+cell.roomId;
+          facMap[fk] = facMap[fk]||[]; facMap[fk].push({div:div.id, day, pid, cell});
+          roomMap[rk] = roomMap[rk]||[]; roomMap[rk].push({div:div.id, day, pid, cell});
+
+          // capacity check
+          const room = byId(db.rooms, cell.roomId);
+          if(room && room.capacity < div.strength){
+            conflicts.push({type:"Capacity", severity:"high",
+              text:`${div.name}: room ${room.name} capacity (${room.capacity}) < class strength (${div.strength})`,
+              day, pid, divisionId:div.id});
+          }
+          // lab-type check
+          const sub = byId(db.subjects, cell.subjectId);
+          if(sub && sub.isLab && room && room.type!=="lab"){
+            conflicts.push({type:"Lab mismatch", severity:"high",
+              text:`${div.name}: lab subject ${sub.name} scheduled in non-lab room ${room.name}`,
+              day, pid, divisionId:div.id});
+          }
+          // faculty availability check
+          const fac = byId(db.faculty, cell.facultyId);
+          if(fac && !Generator ){ }
+        });
+      });
+    });
+    Object.entries(facMap).forEach(([k,list])=>{
+      if(list.length>1){
+        conflicts.push({type:"Faculty double-booking", severity:"high",
+          text:`Faculty clash on ${list[0].day} ${list[0].pid}: assigned to ${list.map(l=>byId(db.divisions,l.div).name).join(", ")}`,
+          day:list[0].day, pid:list[0].pid, divisionId:list[0].div});
+      }
+    });
+    Object.entries(roomMap).forEach(([k,list])=>{
+      if(list.length>1){
+        conflicts.push({type:"Room double-booking", severity:"high",
+          text:`Room clash on ${list[0].day} ${list[0].pid}: used by ${list.map(l=>byId(db.divisions,l.div).name).join(", ")}`,
+          day:list[0].day, pid:list[0].pid, divisionId:list[0].div});
+      }
+    });
+    // faculty unavailability violations
+    db.divisions.forEach(div=>{
+      const tt = db.timetables[div.id]; if(!tt) return;
+      days.forEach(day=> periods.forEach(pid=>{
+        const cell = tt[day] && tt[day][pid]; if(!cell) return;
+        const fac = byId(db.faculty, cell.facultyId);
+        if(fac && fac.unavailable && fac.unavailable.some(u=>u.day===day&&u.periodId===pid)){
+          conflicts.push({type:"Availability violation", severity:"medium",
+            text:`${fac.name} marked unavailable ${day} ${pid} but is scheduled for ${div.name}`,
+            day, pid, divisionId:div.id});
+        }
+      }));
+    });
+    return conflicts;
+  }
+  return {detect};
+})();
+
+/* ---------------------------------------------------------------
+   6. AI ASSISTANT (rule-based; swap AIService.callBackend for a
+      real API later — never place API keys in frontend code)
+---------------------------------------------------------------- */
+const AIService = (function(){
+  // Stub for future integration with a secure backend / Claude API.
+  // The frontend should call your own server, which holds the key.
+  async function callBackend(prompt, context){
+    // Example (disabled): 
+    // const res = await fetch('/api/ai/assistant', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt, context})});
+    // return (await res.json()).reply;
+    throw new Error("Backend not connected — using local rule-based engine.");
+  }
+
+  function findFacultyByName(db, text){
+    const lower = text.toLowerCase();
+    return db.faculty.find(f=> lower.includes(f.name.toLowerCase()) || lower.includes(f.name.split(" ").pop().toLowerCase()));
+  }
+  function findRoomByName(db, text){
+    const lower = text.toLowerCase();
+    return db.rooms.find(r=> lower.includes(r.name.toLowerCase()));
+  }
+  function findSubjectByName(db, text){
+    const lower = text.toLowerCase();
+    return db.subjects.find(s=> lower.includes(s.name.toLowerCase()) || lower.includes(s.code.toLowerCase()));
+  }
+  function todayName(db){
+    const idx = new Date().getDay(); // 0 sun
+    const map = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const name = map[idx];
+    return db.meta.workingDays.includes(name) ? name : db.meta.workingDays[0];
+  }
+
+  function answer(db, text){
+    const lower = text.toLowerCase().trim();
+
+    // 1) Today's timetable
+    if(/today'?s?\s+timetable|timetable\s+today|show\s+today/i.test(lower)){
+      const day = todayName(db);
+      const div = db.divisions[0];
+      if(!div) return "There are no divisions set up yet — add one in Classes/Divisions first.";
+      const tt = db.timetables[div.id];
+      if(!tt) return `No timetable has been generated yet. Go to Timetable Generator to create one, then ask me again.`;
+      const periods = Generator.slotList(db.meta);
+      let rows = periods.map(pid=>{
+        const cell = tt[day] && tt[day][pid];
+        if(!cell) return `${pid}: free`;
+        const sub = byId(db.subjects, cell.subjectId), fac = byId(db.faculty, cell.facultyId), room = byId(db.rooms, cell.roomId);
+        return `${pid}: ${sub?sub.name:'?'} — ${fac?fac.name:'?'} in ${room?room.name:'?'}`;
+      }).join("<br>");
+      return `<b>${day}'s timetable for ${div.name}:</b><br>${rows}`;
+    }
+
+    // 2) Overloaded faculty
+    if(/overloaded|overload|too many hours|workload/i.test(lower)){
+      const stats = computeWorkload(db);
+      const over = stats.filter(s=>s.pct>=90);
+      if(!over.length) return "No faculty are currently overloaded (all under 90% of max weekly hours). Nicely balanced!";
+      return "<b>Overloaded / near-capacity faculty:</b><br>" + over.map(o=>`${o.name}: ${o.hours}/${o.max} hrs (${o.pct}%)`).join("<br>");
+    }
+
+    // 3) What happens if <room/lab> unavailable
+    if(/what happens if|unavailable|what if/i.test(lower) && (/lab|room/.test(lower))){
+      const room = findRoomByName(db, lower);
+      if(!room) return "I couldn't identify which room or lab you mean — try naming it exactly, e.g. \"What happens if Lab 2 is unavailable?\"";
+      const impact = simulateRoomUnavailable(db, room.id);
+      return `<b>Impact of ${room.name} becoming unavailable:</b><br>${impact.affected.length} class session(s) affected across ${impact.divisions.size} division(s).<br>${impact.details.join("<br>")}`;
+    }
+
+    // 4) Faculty unavailable on a day
+    if(/unavailable on|not available on|on leave/i.test(lower)){
+      const fac = findFacultyByName(db, lower);
+      const dayMatch = db.meta.workingDays.find(d=> lower.includes(d.toLowerCase()));
+      if(!fac) return "Which faculty member did you mean? Please include their name.";
+      if(!dayMatch) return `Which day should I mark ${fac.name} unavailable for?`;
+      return {
+        confirm:true,
+        action:{type:"markUnavailable", facultyId:fac.id, day:dayMatch},
+        text:`I found ${fac.name} and ${dayMatch}. This will mark them unavailable for all periods that day, which may create conflicts in the current timetable. Shall I proceed? (yes/no)`
+      };
+    }
+
+    // 5) Why was X assigned to Y
+    if(/why (was|is)/i.test(lower) && /assigned/i.test(lower)){
+      const sub = findSubjectByName(db, lower);
+      const dayMatch = db.meta.workingDays.find(d=> lower.includes(d.toLowerCase()));
+      if(!sub) return "Tell me which subject you're asking about, e.g. \"Why was Java assigned to Monday at 10 AM?\"";
+      // search timetables for this subject
+      let found = null;
+      db.divisions.forEach(div=>{
+        const tt = db.timetables[div.id]; if(!tt || found) return;
+        Object.entries(tt).forEach(([day, periods])=>{
+          if(found) return;
+          Object.entries(periods).forEach(([pid, cell])=>{
+            if(found) return;
+            if(cell && cell.subjectId===sub.id && (!dayMatch || day===dayMatch)) found = {div, day, pid, cell};
+          });
+        });
+      });
+      if(!found) return `I couldn't find ${sub.name} scheduled ${dayMatch?('on '+dayMatch):''} in the current timetable.`;
+      const fac = byId(db.faculty, found.cell.facultyId), room = byId(db.rooms, found.cell.roomId);
+      return `<b>${sub.name}</b> was placed on <b>${found.day} ${found.pid}</b> for <b>${found.div.name}</b> because:<br>`+
+        `&bull; ${fac?fac.name:'the assigned faculty'} was available and qualified to teach it then<br>`+
+        `&bull; ${room?room.name:'the room'} was free and had sufficient capacity (${room?room.capacity:'-'} ≥ ${found.div.strength})<br>`+
+        `&bull; No other class, faculty, or room conflict existed in that slot<br>`+
+        `&bull; It satisfied the weekly-hour requirement (${sub.weeklyHours} hrs/week) without exceeding 2 sessions/day for this subject.`;
+    }
+
+    // 6) room utilization
+    if(/room utili[sz]ation|which rooms? (are|is) free|free rooms?/i.test(lower)){
+      const util = computeRoomUtil(db);
+      return "<b>Room utilisation:</b><br>" + util.slice(0,8).map(u=>`${u.name}: ${u.pct}% used`).join("<br>");
+    }
+
+    // 7) conflicts
+    if(/conflicts?/i.test(lower)){
+      const c = ConflictEngine.detect(db);
+      if(!c.length) return "No conflicts detected in the current timetable. Everything checks out!";
+      return `<b>${c.length} conflict(s) found:</b><br>` + c.slice(0,6).map(x=>`&bull; [${x.type}] ${x.text}`).join("<br>") + (c.length>6?`<br>&hellip; and ${c.length-6} more (see Conflict Detection page)`:'');
+    }
+
+    // 8) substitute suggestion
+    if(/substitute/i.test(lower)){
+      const fac = findFacultyByName(db, lower);
+      if(!fac) return "Tell me which faculty needs a substitute, e.g. \"Suggest a substitute for Dr. Sharma\".";
+      const subs = suggestSubstitutes(db, fac.id);
+      if(!subs.length) return `No qualified substitute found for ${fac.name}'s subjects among current faculty.`;
+      return `<b>Suggested substitutes for ${fac.name}:</b><br>` + subs.map(s=>`${s.name} (teaches ${s.count} shared subject(s), currently ${s.hours} hrs/week)`).join("<br>");
+    }
+
+    // default help
+    return "I can help with things like:<br>&bull; \"Show today's timetable\"<br>&bull; \"Which faculty is overloaded?\"<br>&bull; \"What happens if Lab 2 is unavailable?\"<br>&bull; \"Prof. Sharma is unavailable on Monday\"<br>&bull; \"Why was Java assigned to Monday at 10 AM?\"<br>&bull; \"Show conflicts\" &bull; \"Suggest a substitute for &lt;name&gt;\"";
+  }
+
+  function computeWorkload(db){
+    const periods = Generator.slotList(db.meta);
+    return db.faculty.map(f=>{
+      let hours = 0;
+      db.divisions.forEach(div=>{
+        const tt = db.timetables[div.id]; if(!tt) return;
+        db.meta.workingDays.forEach(day=> periods.forEach(pid=>{
+          const cell = tt[day] && tt[day][pid];
+          if(cell && cell.facultyId===f.id) hours++;
+        }));
+      });
+      return {name:f.name, id:f.id, hours, max:f.maxHoursWeek, pct: Math.round(hours/f.maxHoursWeek*100)};
+    }).sort((a,b)=>b.pct-a.pct);
+  }
+  function computeRoomUtil(db){
+    const periods = Generator.slotList(db.meta);
+    const totalSlots = db.meta.workingDays.length * periods.length;
+    return db.rooms.map(r=>{
+      let used=0;
+      db.divisions.forEach(div=>{
+        const tt = db.timetables[div.id]; if(!tt) return;
+        db.meta.workingDays.forEach(day=> periods.forEach(pid=>{
+          const cell = tt[day] && tt[day][pid];
+          if(cell && cell.roomId===r.id) used++;
+        }));
+      });
+      return {name:r.name, id:r.id, used, pct: Math.round(used/totalSlots*100)};
+    }).sort((a,b)=>b.pct-a.pct);
+  }
+  function simulateRoomUnavailable(db, roomId){
+    const periods = Generator.slotList(db.meta);
+    const affected = []; const divisions = new Set(); const details = [];
+    db.divisions.forEach(div=>{
+      const tt = db.timetables[div.id]; if(!tt) return;
+      db.meta.workingDays.forEach(day=> periods.forEach(pid=>{
+        const cell = tt[day] && tt[day][pid];
+        if(cell && cell.roomId===roomId){
+          affected.push({div:div.id, day, pid, cell});
+          divisions.add(div.id);
+          const sub = byId(db.subjects, cell.subjectId);
+          details.push(`&bull; ${div.name}: ${sub?sub.name:'class'} on ${day} ${pid} needs reassignment`);
+        }
+      }));
+    });
+    return {affected, divisions, details: details.slice(0,10)};
+  }
+  function suggestSubstitutes(db, facultyId){
+    const fac = byId(db.faculty, facultyId); if(!fac) return [];
+    const wl = computeWorkload(db);
+    return db.faculty.filter(f=>f.id!==facultyId && f.subjects.some(s=>fac.subjects.includes(s)))
+      .map(f=>{
+        const wlItem = wl.find(w=>w.id===f.id);
+        return {name:f.name, id:f.id, count:f.subjects.filter(s=>fac.subjects.includes(s)).length, hours: wlItem?wlItem.hours:0};
+      })
+      .sort((a,b)=> a.hours-b.hours)
+      .slice(0,4);
+  }
+
+  return {answer, computeWorkload, computeRoomUtil, simulateRoomUnavailable, suggestSubstitutes, callBackend};
+})();
+
+/* ---------------------------------------------------------------
+   7. UI HELPERS: toast / modal / notifications
+---------------------------------------------------------------- */
+function toast(msg, type, title){
+  const host = document.getElementById('toastHost');
+  const t = el(`<div class="toast ${type||''}"><b>${escapeHtml(title||(type==='success'?'Success':type==='danger'?'Error':'Notice'))}</b>${escapeHtml(msg)}</div>`);
+  host.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3600);
+}
+function openModal(title, bodyHtml, footButtons){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  const foot = document.getElementById('modalFoot');
+  foot.innerHTML='';
+  (footButtons||[]).forEach(b=>{
+    const btn = el(`<button class="btn ${b.cls||''}">${escapeHtml(b.label)}</button>`);
+    btn.addEventListener('click', b.onClick);
+    foot.appendChild(btn);
+  });
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target.id==='modalOverlay') closeModal(); });
+
+function refreshNotifDropdown(){
+  const db = DataService.get();
+  const list = document.getElementById('notifList');
+  const dot = document.getElementById('notifDot');
+  const unread = db.notifications.filter(n=>!n.read).length;
+  dot.style.display = unread? 'block':'none';
+  list.innerHTML = db.notifications.length ? db.notifications.slice(0,10).map(n=>`
+    <div class="dropdown-item">
+      <div class="ttl">${escapeHtml(n.title)}</div>
+      <div>${escapeHtml(n.meta||'')}</div>
+      <div class="meta">${new Date(n.time).toLocaleString()}</div>
+    </div>`).join('') : `<div class="dropdown-item">No notifications yet.</div>`;
+}
+
+/* ---------------------------------------------------------------
+   8. APP / ROUTER
+---------------------------------------------------------------- */
+const App = {
+  route: 'dashboard',
+  db: null,
+  init(){
+    this.db = DataService.load();
+    applyTheme(this.db.meta.theme||'light');
+    buildSidebar();
+    bindTopbar();
+    this.navigate('dashboard');
+    refreshNotifDropdown();
+    if(!this.db.faculty.length && !this.db.divisions.length){
+      toast('No data yet. Click "Load Demo Data" in Settings or Dashboard to get started.', 'warning', 'Empty workspace');
+    }
+    // Pull faculty from the backend so it is the source of truth for that module.
+    FacultyAPI.list().then(list=>{
+      if(Array.isArray(list)){
+        this.db.faculty = list;
+        DataService.save();
+        if(this.route==='faculty' || this.route==='dashboard' || this.route==='workload') this.refresh();
+      }
+    }).catch(err=>{
+      console.warn('Chronos backend not reachable, using locally cached faculty data.', err);
+    });
+  },
+  navigate(id){
+    this.route = id;
+    document.querySelectorAll('.navlink').forEach(n=>n.classList.toggle('active', n.dataset.id===id));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    let page = document.getElementById('page-'+id);
+    if(!page){
+      page = el(`<div class="page" id="page-${id}"></div>`);
+      document.getElementById('content').appendChild(page);
+    }
+    Renderers[id](page);
+    page.classList.add('active');
+    const navItem = NAV.flatMap(g=>g.items).find(n=>n.id===id);
+    document.getElementById('pageTitle').textContent = navItem? navItem.label : 'Dashboard';
+    if(window.innerWidth<=960) document.getElementById('sidebar').classList.remove('open');
+    window.scrollTo(0,0);
+  },
+  refresh(){ this.navigate(this.route); }
+};
+
+function buildSidebar(){
+  const nav = document.getElementById('navlist');
+  nav.innerHTML='';
+  NAV.forEach(group=>{
+    nav.appendChild(el(`<div class="nav-group-label">${group.group}</div>`));
+    group.items.forEach(item=>{
+      const li = el(`<li><div class="navlink" data-id="${item.id}"><span class="ic">${item.ic}</span><span>${item.label}</span></div></li>`);
+      li.querySelector('.navlink').addEventListener('click', ()=> App.navigate(item.id));
+      nav.appendChild(li);
+    });
+  });
+}
+function bindTopbar(){
+  document.getElementById('menuToggle').addEventListener('click', ()=> document.getElementById('sidebar').classList.toggle('open'));
+  document.getElementById('themeToggle').addEventListener('click', ()=>{
+    const db = DataService.get();
+    const next = (db.meta.theme==='dark') ? 'light':'dark';
+    db.meta.theme = next; applyTheme(next); DataService.save();
+  });
+  document.getElementById('notifBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const dd = document.getElementById('notifDropdown');
+    dd.classList.toggle('show');
+    if(dd.classList.contains('show')){
+      DataService.get().notifications.forEach(n=>n.read=true);
+      DataService.save(); refreshNotifDropdown();
+    }
+  });
+  document.addEventListener('click', ()=> document.getElementById('notifDropdown').classList.remove('show'));
+  document.getElementById('globalSearch').addEventListener('input', (e)=> globalSearch(e.target.value));
+}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeToggle').innerHTML = t==='dark' ? '&#9728;' : '&#9788;';
+}
+function globalSearch(q){
+  if(!q || q.length<2) return;
+  const db = DataService.get(); q = q.toLowerCase();
+  const hitF = db.faculty.find(f=>f.name.toLowerCase().includes(q));
+  const hitS = db.subjects.find(s=>s.name.toLowerCase().includes(q)||s.code.toLowerCase().includes(q));
+  const hitR = db.rooms.find(r=>r.name.toLowerCase().includes(q));
+  const hitD = db.divisions.find(d=>d.name.toLowerCase().includes(q));
+  if(hitF){ App.navigate('faculty'); }
+  else if(hitS){ App.navigate('subjects'); }
+  else if(hitR){ App.navigate('rooms'); }
+  else if(hitD){ App.navigate('classes'); }
+}
+
+/* ---------------------------------------------------------------
+   9. RENDERERS — one function per page
+---------------------------------------------------------------- */
+const Renderers = {};
+
+/* ---- Dashboard ---- */
+Renderers.dashboard = function(page){
+  const db = DataService.get();
+  const wl = AIService.computeWorkload(db);
+  const conflicts = ConflictEngine.detect(db);
+  const totalSessions = Object.values(db.timetables).reduce((sum, tt)=>{
+    return sum + Object.values(tt||{}).reduce((s2,day)=> s2 + Object.values(day||{}).filter(Boolean).length, 0);
+  },0);
+  const util = AIService.computeRoomUtil(db);
+  const avgUtil = util.length? Math.round(util.reduce((a,b)=>a+b.pct,0)/util.length) : 0;
+
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Welcome back</h1><div class="section-sub">${escapeHtml(db.meta.orgName)} &mdash; here's what's happening this week.</div></div>
+      <div class="btnrow">
+        <button class="btn" id="btnLoadDemoDash">Load Demo Data</button>
+        <button class="btn btn-accent" id="btnGoGenerate">Generate Timetable</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:18px;">
+      <div class="stat s-primary"><div class="label">Divisions</div><div class="value">${db.divisions.length}</div><div class="delta">${db.departments.length} departments</div></div>
+      <div class="stat s-info"><div class="label">Faculty</div><div class="value">${db.faculty.length}</div><div class="delta">${wl.filter(w=>w.pct>=90).length} near-capacity</div></div>
+      <div class="stat s-success"><div class="label">Scheduled sessions</div><div class="value">${totalSessions}</div><div class="delta up">${db.subjects.length} subjects covered</div></div>
+      <div class="stat ${conflicts.length? 's-danger':'s-success'}"><div class="label">Active conflicts</div><div class="value">${conflicts.length}</div><div class="delta ${conflicts.length?'down':'up'}">${conflicts.length? 'Needs attention':'All clear'}</div></div>
+    </div>
+
+    <div class="grid grid-3" style="align-items:start;">
+      <div class="card" style="grid-column:span 2;">
+        <div class="flex-between"><h3>Faculty workload</h3><span class="small">hrs / week vs max</span></div>
+        <div class="canvaswrap"><canvas id="dashWorkloadChart" height="220"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Room utilisation</h3>
+        <div class="small" style="margin-bottom:8px;">Average ${avgUtil}% across ${db.rooms.length} rooms/labs</div>
+        <div class="canvaswrap"><canvas id="dashRoomChart" height="220"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:16px;align-items:start;">
+      <div class="card">
+        <h3>Recent activity</h3>
+        <div id="dashAudit"></div>
+      </div>
+      <div class="card">
+        <h3>Conflicts snapshot</h3>
+        <div id="dashConflicts"></div>
+      </div>
+      <div class="card">
+        <h3>Quick actions</h3>
+        <div class="btnrow" style="flex-direction:column;align-items:stretch;">
+          <button class="btn" data-nav="faculty">Add faculty</button>
+          <button class="btn" data-nav="subjects">Add subject</button>
+          <button class="btn" data-nav="whatif">Run what-if simulation</button>
+          <button class="btn" data-nav="ai">Ask AI assistant</button>
+        </div>
+      </div>
+    </div>
+  `;
+  page.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>App.navigate(b.dataset.nav)));
+  page.querySelector('#btnGoGenerate').addEventListener('click',()=>App.navigate('generator'));
+  page.querySelector('#btnLoadDemoDash').addEventListener('click', loadDemoFlow);
+
+  const auditBox = page.querySelector('#dashAudit');
+  auditBox.innerHTML = db.auditLog.length? db.auditLog.slice(0,6).map(a=>`
+    <div style="padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+      <div style="font-weight:600;">${escapeHtml(a.action)}</div>
+      <div class="small">${escapeHtml(a.details||'')} &middot; ${new Date(a.ts).toLocaleString()}</div>
+    </div>`).join('') : `<div class="small">No activity yet.</div>`;
+
+  const confBox = page.querySelector('#dashConflicts');
+  confBox.innerHTML = conflicts.length? conflicts.slice(0,5).map(c=>`
+    <div style="padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+      <span class="pill pill-danger">${escapeHtml(c.type)}</span>
+      <div style="margin-top:4px;">${escapeHtml(c.text)}</div>
+    </div>`).join('') + `<button class="btn btn-sm" style="margin-top:8px;" data-nav="conflicts">View all</button>`
+    : `<div class="small">No conflicts detected. &#9989;</div>`;
+  const cbtn = confBox.querySelector('[data-nav]'); if(cbtn) cbtn.addEventListener('click',()=>App.navigate('conflicts'));
+
+  drawBarChart('dashWorkloadChart', wl.slice(0,8).map(w=>({label:w.name.split(' ').pop(), value:w.hours, max:w.max})));
+  drawBarChart('dashRoomChart', util.slice(0,6).map(u=>({label:u.name.replace('Lab-','L'), value:u.pct, max:100})));
+};
+
+async function loadDemoFlow(){
+  DataService.loadDemo();
+  DataService.log('Demo data loaded','Seeded departments, divisions, subjects, faculty, rooms');
+  toast('Sample institute data has been loaded.', 'success', 'Demo data ready');
+  App.refresh();
+}
+
+/* ---- Timetable (view + drag/drop edit) ---- */
+Renderers.timetable = function(page){
+  const db = DataService.get();
+  if(!db.divisions.length){
+    page.innerHTML = emptyState('No divisions yet', 'Add a division or load demo data to view timetables.');
+    return;
+  }
+  const state = page._state || {divisionId: db.divisions[0].id};
+  page._state = state;
+
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Timetable</h1><div class="section-sub">Drag a session to move it — conflicts are highlighted automatically.</div></div>
+      <div class="btnrow">
+        <button class="btn" id="btnPrintTT">&#128424; Print</button>
+        <button class="btn" id="btnCsvTT">Download CSV</button>
+        <button class="btn btn-primary" id="btnPdfTT">Download PDF</button>
+      </div>
+    </div>
+    <div class="tt-toolbar">
+      <select id="divSelect"></select>
+      <select id="viewSelect">
+        <option value="division">Division view</option>
+        <option value="faculty">Faculty view</option>
+        <option value="room">Room view</option>
+      </select>
+      <span class="small" id="ttMeta"></span>
+    </div>
+    <div class="card" id="ttCard" style="padding:10px;">
+      <div class="table-wrap"><div id="ttGridWrap"></div></div>
+    </div>
+  `;
+  const divSelect = page.querySelector('#divSelect');
+  divSelect.innerHTML = db.divisions.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('') +
+    `<optgroup label="Faculty">${db.faculty.map(f=>`<option value="fac_${f.id}">${escapeHtml(f.name)}</option>`).join('')}</optgroup>` +
+    `<optgroup label="Rooms">${db.rooms.map(r=>`<option value="room_${r.id}">${escapeHtml(r.name)}</option>`).join('')}</optgroup>`;
+  divSelect.value = state.divisionId;
+  divSelect.addEventListener('change', ()=>{ state.divisionId = divSelect.value; renderGrid(); });
+  page.querySelector('#viewSelect').addEventListener('change', renderGrid);
+
+  page.querySelector('#btnPrintTT').addEventListener('click', ()=> window.print());
+  page.querySelector('#btnCsvTT').addEventListener('click', ()=> exportTimetableCSV(state.divisionId));
+  page.querySelector('#btnPdfTT').addEventListener('click', ()=>{ toast('Use your browser print dialog and choose "Save as PDF".', 'info', 'Preparing PDF'); setTimeout(()=>window.print(), 400); });
+
+  function renderGrid(){
+    const db2 = DataService.get();
+    const sel = divSelect.value;
+    const wrap = page.querySelector('#ttGridWrap');
+    const periods = Generator.slotList(db2.meta);
+    const allPeriods = db2.meta.periods;
+    const conflicts = ConflictEngine.detect(db2);
+    const conflictKey = new Set(conflicts.map(c=> c.day+'_'+c.pid));
+
+    let getCell, title;
+    if(sel.startsWith('fac_')){
+      const facId = sel.slice(4); const fac = byId(db2.faculty, facId); title = fac.name;
+      getCell = (day,pid)=>{
+        for(const div of db2.divisions){
+          const tt = db2.timetables[div.id]; const c = tt && tt[day] && tt[day][pid];
+          if(c && c.facultyId===facId) return {cell:c, div};
+        }
+        return null;
+      };
+    } else if(sel.startsWith('room_')){
+      const roomId = sel.slice(5); const room = byId(db2.rooms, roomId); title = room.name;
+      getCell = (day,pid)=>{
+        for(const div of db2.divisions){
+          const tt = db2.timetables[div.id]; const c = tt && tt[day] && tt[day][pid];
+          if(c && c.roomId===roomId) return {cell:c, div};
+        }
+        return null;
+      };
+    } else {
+      const div = byId(db2.divisions, sel); title = div? div.name : '';
+      getCell = (day,pid)=>{
+        const tt = db2.timetables[sel];
+        const c = tt && tt[day] && tt[day][pid];
+        return c ? {cell:c, div} : null;
+      };
+    }
+    page.querySelector('#ttMeta').textContent = title ? `Showing: ${title}` : '';
+
+    let html = `<table class="tt-grid"><thead><tr><th>Day / Period</th>`;
+    allPeriods.forEach(p=> html += `<th>${p.label}<br><span style="font-weight:400;">${p.start}</span></th>`);
+    html += `</tr></thead><tbody>`;
+    db2.meta.workingDays.forEach(day=>{
+      html += `<tr><td class="daycell">${day}</td>`;
+      allPeriods.forEach(p=>{
+        if(p.isBreak){ html += `<td style="background:var(--surface-alt);text-align:center;color:var(--text-faint);font-size:10.5px;">${p.label}</td>`; return; }
+        const found = getCell(day, p.id);
+        const isConf = conflictKey.has(day+'_'+p.id);
+        if(found){
+          const sub = byId(db2.subjects, found.cell.subjectId);
+          const fac = byId(db2.faculty, found.cell.facultyId);
+          const room = byId(db2.rooms, found.cell.roomId);
+          const colorClass = sub && sub.isLab ? 'lab':'';
+          html += `<td><div class="tt-cell ${colorClass} ${isConf?'conflict':''}" draggable="${sel.startsWith('fac_')||sel.startsWith('room_')?'false':'true'}"
+              data-day="${day}" data-pid="${p.id}" style="background:${cellColor(sub)};">
+              <div class="sub">${escapeHtml(sub?sub.name:'?')}${!sel.startsWith('fac_')?'':''}</div>
+              <div class="fac">${escapeHtml(fac?fac.name.replace('Dr. ','').replace('Prof. ',''):'')}</div>
+              <div class="room">${escapeHtml(room?room.name:'')}${!sel.startsWith('room_')?'':' · '+ (found.div? found.div.name:'')}</div>
+            </div></td>`;
+        } else {
+          html += `<td><div class="tt-empty" data-day="${day}" data-pid="${p.id}">free</div></td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+
+    if(!sel.startsWith('fac_') && !sel.startsWith('room_')){
+      enableDragDrop(wrap, sel);
+    }
+  }
+  renderGrid();
+};
+
+function cellColor(sub){
+  if(!sub) return 'var(--surface-alt)';
+  if(sub.isLab) return 'var(--info-dim)';
+  const palette = ['var(--primary-dim)','var(--accent-dim)','var(--success-dim)','var(--warning-dim)'];
+  let h=0; for(const c of sub.code) h += c.charCodeAt(0);
+  return palette[h%palette.length];
+}
+
+function enableDragDrop(wrap, divisionId){
+  let dragSrc = null;
+  wrap.querySelectorAll('.tt-cell[draggable="true"]').forEach(c=>{
+    c.addEventListener('dragstart', ()=>{ dragSrc = {day:c.dataset.day, pid:c.dataset.pid}; });
+  });
+  wrap.querySelectorAll('[data-day][data-pid]').forEach(target=>{
+    target.addEventListener('dragover', e=>{ e.preventDefault(); target.classList.add('dragover'); });
+    target.addEventListener('dragleave', ()=> target.classList.remove('dragover'));
+    target.addEventListener('drop', e=>{
+      e.preventDefault(); target.classList.remove('dragover');
+      if(!dragSrc) return;
+      const destDay = target.dataset.day, destPid = target.dataset.pid;
+      moveSession(divisionId, dragSrc.day, dragSrc.pid, destDay, destPid);
+      dragSrc = null;
+    });
+  });
+}
+
+function moveSession(divisionId, srcDay, srcPid, destDay, destPid){
+  const db = DataService.get();
+  const tt = db.timetables[divisionId];
+  if(!tt) return;
+  const srcCell = tt[srcDay] && tt[srcDay][srcPid];
+  if(!srcCell) return;
+  const destCell = tt[destDay] && tt[destDay][destPid];
+
+  // conflict pre-check for destination (faculty/room busy elsewhere at destDay/destPid)
+  let conflictMsg = null;
+  db.divisions.forEach(div=>{
+    if(div.id===divisionId) return;
+    const otherTT = db.timetables[div.id]; if(!otherTT) return;
+    const c = otherTT[destDay] && otherTT[destDay][destPid];
+    if(c && c.facultyId===srcCell.facultyId) conflictMsg = `Faculty is already teaching ${div.name} at that time.`;
+    if(c && c.roomId===srcCell.roomId && !destCell) conflictMsg = conflictMsg || `Room is already booked for ${div.name} at that time.`;
+  });
+
+  tt[destDay] = tt[destDay]||{}; tt[srcDay] = tt[srcDay]||{};
+  tt[destDay][destPid] = srcCell;
+  if(destCell){ tt[srcDay][srcPid] = destCell; } else { delete tt[srcDay][srcPid]; }
+
+  DataService.log('Timetable edited', `Moved a session from ${srcDay} ${srcPid} to ${destDay} ${destPid}`);
+  DataService.save();
+  if(conflictMsg) toast(conflictMsg+' Marked as a conflict — resolve it on the Conflict Detection page.', 'warning', 'Possible conflict');
+  else toast('Session moved successfully.', 'success', 'Timetable updated');
+  App.refresh();
+}
+
+function exportTimetableCSV(divisionId){
+  const db = DataService.get();
+  const div = byId(db.divisions, divisionId);
+  const periods = Generator.slotList(db.meta);
+  let rows = [['Day','Period','Time','Subject','Faculty','Room']];
+  const tt = db.timetables[divisionId] || {};
+  db.meta.workingDays.forEach(day=>{
+    periods.forEach(pid=>{
+      const p = byId(db.meta.periods, pid);
+      const cell = tt[day] && tt[day][pid];
+      if(cell){
+        const sub = byId(db.subjects, cell.subjectId), fac = byId(db.faculty, cell.facultyId), room = byId(db.rooms, cell.roomId);
+        rows.push([day, pid, `${p.start}-${p.end}`, sub?sub.name:'', fac?fac.name:'', room?room.name:'']);
+      } else {
+        rows.push([day, pid, `${p.start}-${p.end}`, '', '', '']);
+      }
+    });
+  });
+  downloadCSV(rows, `timetable_${div?div.name:'export'}.csv`);
+  DataService.log('CSV export', `Timetable exported for ${div?div.name:divisionId}`);
+}
+function downloadCSV(rows, filename){
+  const csv = rows.map(r=> r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast(`${filename} downloaded.`, 'success', 'Export complete');
+}
+
+/* ---- Generator (wizard) ---- */
+Renderers.generator = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Timetable Generator</h1><div class="section-sub">Constraint-based optimizer — respects hard constraints, optimizes soft ones.</div></div>
+    </div>
+    <div class="grid grid-3" style="align-items:start;">
+      <div class="card">
+        <h3>1. Scope</h3>
+        <div class="field"><label>Departments included</label>
+          <div class="chiplist" id="deptChips"></div>
+        </div>
+        <div class="field"><label>Divisions included</label>
+          <div class="chiplist" id="divChips"></div>
+        </div>
+        <div class="hr"></div>
+        <h3>2. Working pattern</h3>
+        <div class="field"><label>Working days</label><div class="chiplist" id="dayChips"></div></div>
+        <div class="small">Periods and timings are configured in Settings.</div>
+      </div>
+      <div class="card">
+        <h3>3. Constraints (hard — always enforced)</h3>
+        <ul style="margin:0 0 10px 18px;padding:0;font-size:12.8px;color:var(--text-dim);">
+          <li>No faculty conflicts</li><li>No room conflicts</li><li>No class conflicts</li>
+          <li>Room capacity ≥ class strength</li><li>Labs only in lab rooms</li>
+          <li>Faculty availability respected</li><li>Weekly subject hours fulfilled</li>
+        </ul>
+        <div class="hr"></div>
+        <h3>Soft constraint weights</h3>
+        <div id="softWeights"></div>
+      </div>
+      <div class="card">
+        <h3>4. Run</h3>
+        <div class="field"><label>Number of options to generate</label>
+          <select id="optCount"><option>2</option><option selected>3</option><option>4</option></select>
+        </div>
+        <button class="btn btn-primary" id="btnRunGen" style="width:100%;justify-content:center;">&#9889; Generate timetable options</button>
+        <div class="small" style="margin-top:10px;">Generation runs locally using a greedy constraint-satisfaction pass with randomized restarts, then scores each option against your soft-constraint weights.</div>
+        <div id="genProgress" style="margin-top:12px;display:none;">
+          <div class="bar-track"><div class="bar-fill" id="genBarFill" style="width:0%;"></div></div>
+          <div class="small" id="genStatus" style="margin-top:6px;"></div>
+        </div>
+      </div>
+    </div>
+    <div id="genResults" style="margin-top:20px;"></div>
+  `;
+
+  const deptChips = page.querySelector('#deptChips');
+  deptChips.innerHTML = db.departments.map(d=>`<span class="chip on" data-id="${d.id}">${escapeHtml(d.name)}</span>`).join('') || '<span class="small">No departments — add one in Classes/Divisions.</span>';
+  deptChips.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+
+  const divChips = page.querySelector('#divChips');
+  divChips.innerHTML = db.divisions.map(d=>`<span class="chip on" data-id="${d.id}">${escapeHtml(d.name)}</span>`).join('') || '<span class="small">No divisions yet.</span>';
+  divChips.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+
+  const dayChips = page.querySelector('#dayChips');
+  const allDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  dayChips.innerHTML = allDays.map(d=>`<span class="chip ${db.meta.workingDays.includes(d)?'on':''}" data-day="${d}">${d}</span>`).join('');
+  dayChips.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+    c.classList.toggle('on');
+    db.meta.workingDays = Array.from(dayChips.querySelectorAll('.chip.on')).map(x=>x.dataset.day);
+    DataService.save();
+  }));
+
+  const sw = page.querySelector('#softWeights');
+  sw.innerHTML = db.constraints.soft.map(c=>`
+    <div style="margin-bottom:10px;">
+      <div class="flex-between"><span class="small" style="color:var(--text);">${escapeHtml(c.label)}</span><span class="small">${c.weight}</span></div>
+      <input type="range" min="0" max="100" value="${c.weight}" data-id="${c.id}" style="width:100%;">
+    </div>`).join('');
+  sw.querySelectorAll('input[type=range]').forEach(r=>r.addEventListener('input', ()=>{
+    const c = db.constraints.soft.find(x=>x.id===r.dataset.id); c.weight = parseInt(r.value,10);
+    r.previousElementSibling.querySelector('span:last-child').textContent = r.value;
+    DataService.save();
+  }));
+
+  page.querySelector('#btnRunGen').addEventListener('click', ()=>{
+    if(!db.divisions.length || !db.subjects.length || !db.faculty.length || !db.rooms.length){
+      toast('Add at least one division, subject, faculty member and room before generating.', 'danger', 'Missing data');
+      return;
+    }
+    const progress = page.querySelector('#genProgress'); progress.style.display='block';
+    const bar = page.querySelector('#genBarFill'); const status = page.querySelector('#genStatus');
+    let pct = 0;
+    status.textContent = 'Checking hard constraints (faculty, room, class conflicts)...';
+    const timer = setInterval(()=>{
+      pct += 18;
+      bar.style.width = Math.min(pct,95)+'%';
+      if(pct>40) status.textContent = 'Optimizing soft constraints (workload balance, preferences, gaps)...';
+      if(pct>75) status.textContent = 'Scoring option variants...';
+      if(pct>=95){
+        clearInterval(timer);
+        const count = parseInt(page.querySelector('#optCount').value,10);
+        const options = Generator.generateMultiple(db, count);
+        db.generatedOptions = options;
+        db.activeOptionId = options[0].id;
+        db.timetables = options[0].timetables;
+        DataService.log('Timetable generated', `${options.length} option(s) created — best score ${options[0].metrics.overall}`);
+        DataService.notify('Timetable generated', `${options.length} optimized options ready — top score ${options[0].metrics.overall}/100`, 'success');
+        DataService.save();
+        bar.style.width='100%'; status.textContent='Done.';
+        setTimeout(()=>{ progress.style.display='none'; renderGenResults(page, options); refreshNotifDropdown(); toast('Timetable options generated.', 'success', 'Generation complete'); }, 400);
+      }
+    }, 160);
+  });
+
+  if(db.generatedOptions && db.generatedOptions.length) renderGenResults(page, db.generatedOptions);
+};
+
+function renderGenResults(page, options){
+  const db = DataService.get();
+  const box = page.querySelector('#genResults');
+  box.innerHTML = `<h3 style="margin-bottom:10px;">Generated options</h3><div class="grid grid-3" id="optCards"></div>`;
+  const cards = box.querySelector('#optCards');
+  options.forEach((opt,i)=>{
+    const active = db.activeOptionId===opt.id;
+    const card = el(`
+      <div class="card" style="${active?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-dim);':''}">
+        <div class="flex-between"><h3>Option ${i+1}</h3><span class="pill ${active?'pill-info':'pill-muted'}">${active?'Active':'Preview'}</span></div>
+        <div style="font-family:var(--font-head);font-size:30px;font-weight:700;margin:4px 0;">${opt.metrics.overall}<span style="font-size:14px;color:var(--text-dim);"> / 100</span></div>
+        <div class="small" style="margin-bottom:10px;">${opt.metrics.placed}/${opt.metrics.total} sessions placed ${opt.unplaced.length? '&mdash; '+opt.unplaced.length+' unplaced':''}</div>
+        ${metricRow('Preferences', opt.metrics.pref)}
+        ${metricRow('Workload balance', opt.metrics.balance)}
+        ${metricRow('Free-period gaps', opt.metrics.gaps)}
+        ${metricRow('Subject spread', opt.metrics.spread)}
+        ${metricRow('Room utilisation', opt.metrics.roomuse)}
+        ${metricRow('Consecutive-lecture control', opt.metrics.consec)}
+        <div class="btnrow" style="margin-top:10px;">
+          <button class="btn btn-sm" data-explain="${opt.id}">Explain</button>
+          <button class="btn btn-sm btn-primary" data-apply="${opt.id}">${active?'Reapply':'Use this option'}</button>
+        </div>
+      </div>`);
+    cards.appendChild(card);
+  });
+  cards.querySelectorAll('[data-apply]').forEach(b=>b.addEventListener('click', ()=>{
+    const opt = options.find(o=>o.id===b.dataset.apply);
+    db.timetables = opt.timetables; db.activeOptionId = opt.id;
+    db.versions.unshift({id:uid(), ts:new Date().toISOString(), label:`Applied option scoring ${opt.metrics.overall}`, snapshot: JSON.stringify(opt.timetables)});
+    DataService.log('Timetable option applied', `Score ${opt.metrics.overall}`);
+    DataService.save();
+    toast('This option is now the active timetable.', 'success', 'Applied');
+    App.refresh();
+  }));
+  cards.querySelectorAll('[data-explain]').forEach(b=>b.addEventListener('click', ()=>{
+    const opt = options.find(o=>o.id===b.dataset.explain);
+    openModal('Why this score?', `
+      <p>This option scores <b>${opt.metrics.overall}/100</b>, a weighted blend of your soft-constraint sliders:</p>
+      <ul style="line-height:1.9;">
+        <li><b>Preferences (${opt.metrics.pref})</b>: how often faculty were scheduled in their preferred time-of-day.</li>
+        <li><b>Workload balance (${opt.metrics.balance})</b>: how evenly teaching hours are spread across faculty.</li>
+        <li><b>Free-period gaps (${opt.metrics.gaps})</b>: fewer idle gaps between a class's first and last period each day.</li>
+        <li><b>Subject spread (${opt.metrics.spread})</b>: subjects distributed across the week rather than bunched.</li>
+        <li><b>Room utilisation (${opt.metrics.roomuse})</b>: how efficiently available rooms/labs are used.</li>
+        <li><b>Consecutive-lecture control (${opt.metrics.consec})</b>: avoids back-to-back repeats of the same subject beyond your limit.</li>
+      </ul>
+      <p class="small">All hard constraints (faculty/room/class conflicts, capacity, lab-matching, availability, required hours) are satisfied for every placed session in every option.</p>
+    `, [{label:'Close', cls:'btn-primary', onClick:closeModal}]);
+  }));
+}
+function metricRow(label, val){
+  return `<div style="margin-bottom:6px;">
+    <div class="flex-between"><span class="small" style="color:var(--text);">${label}</span><span class="small">${val}%</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${val}%;background:${val>=75?'var(--success)':val>=50?'var(--accent)':'var(--danger)'};"></div></div>
+  </div>`;
+}
+
+/* ---- Faculty Management ---- */
+Renderers.faculty = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Faculty Management</h1><div class="section-sub">${db.faculty.length} faculty members</div></div>
+      <div class="btnrow"><button class="btn btn-primary" id="btnAddFac">+ Add faculty</button></div>
+    </div>
+    <div class="table-wrap card" style="padding:0;">
+      <table><thead><tr><th>Name</th><th>Dept</th><th>Subjects</th><th>Available days</th><th>Preference</th><th>Max hrs/wk</th><th></th></tr></thead>
+      <tbody id="facBody"></tbody></table>
+    </div>`;
+  const body = page.querySelector('#facBody');
+  function draw(){
+    const db2 = DataService.get();
+    body.innerHTML = db2.faculty.map(f=>`
+      <tr>
+        <td><b>${escapeHtml(f.name)}</b></td>
+        <td><span class="pill pill-info">${escapeHtml(f.dept)}</span></td>
+        <td>${f.subjects.map(sid=>{const s=byId(db2.subjects,sid);return s?`<span class="pill pill-muted">${escapeHtml(s.code)}</span>`:'';}).join(' ')}</td>
+        <td class="small">${f.availDays.join(', ')}</td>
+        <td>${f.preference}</td>
+        <td>${f.maxHoursWeek}</td>
+        <td><button class="btn btn-sm" data-edit="${f.id}">Edit</button> <button class="btn btn-sm btn-danger" data-del="${f.id}">Delete</button></td>
+      </tr>`).join('') || `<tr><td colspan="7"><div class="empty-state">No faculty yet. Add one or load demo data.</div></td></tr>`;
+    body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openFacultyModal(b.dataset.edit)));
+    body.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+      const id = b.dataset.del;
+      try{ await FacultyAPI.remove(id); }
+      catch(err){ toast('Could not delete on backend: '+err.message, 'danger'); return; }
+      const db3=DataService.get(); db3.faculty = db3.faculty.filter(x=>x.id!==id);
+      DataService.log('Faculty removed', id); DataService.save(); toast('Faculty removed.','success'); draw();
+    }));
+  }
+  function openFacultyModal(id){
+    const db2 = DataService.get();
+    const isNew = !id;
+    const f = isNew ? {id:uid(), name:'', dept:db2.departments[0]?db2.departments[0].id:'', subjects:[], availDays:['Mon','Tue','Wed','Thu','Fri'], preference:'Any', maxHoursWeek:18, unavailable:[]} : byId(db2.faculty, id);
+    const body = `
+      <div class="field"><label>Full name</label><input type="text" id="mfName" value="${escapeHtml(f.name)}"></div>
+      <div class="field"><label>Department</label><select id="mfDept">${db2.departments.map(d=>`<option value="${d.id}" ${d.id===f.dept?'selected':''}>${escapeHtml(d.name)}</option>`).join('')}</select></div>
+      <div class="field"><label>Subjects taught</label><div class="chiplist" id="mfSubs">${db2.subjects.map(s=>`<span class="chip ${f.subjects.includes(s.id)?'on':''}" data-id="${s.id}">${escapeHtml(s.code)}</span>`).join('')}</div></div>
+      <div class="field"><label>Available days</label><div class="chiplist" id="mfDays">${['Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<span class="chip ${f.availDays.includes(d)?'on':''}" data-day="${d}">${d}</span>`).join('')}</div></div>
+      <div class="field"><label>Time preference</label><select id="mfPref">${['Any','Morning','Afternoon'].map(p=>`<option ${p===f.preference?'selected':''}>${p}</option>`).join('')}</select></div>
+      <div class="field"><label>Max hours / week</label><input type="number" id="mfMax" value="${f.maxHoursWeek}" min="4" max="30"></div>
+    `;
+    openModal(isNew?'Add faculty':'Edit faculty', body, [
+      {label:'Cancel', onClick:closeModal},
+      {label:'Save', cls:'btn-primary', onClick: async ()=>{
+        const payload = {
+          name: document.getElementById('mfName').value.trim() || 'Unnamed faculty',
+          dept: document.getElementById('mfDept').value,
+          subjects: Array.from(document.querySelectorAll('#mfSubs .chip.on')).map(c=>c.dataset.id),
+          availDays: Array.from(document.querySelectorAll('#mfDays .chip.on')).map(c=>c.dataset.day),
+          preference: document.getElementById('mfPref').value,
+          maxHoursWeek: parseInt(document.getElementById('mfMax').value,10)||18,
+          unavailable: f.unavailable||[],
+        };
+        let saved;
+        try{
+          saved = isNew ? await FacultyAPI.create(payload) : await FacultyAPI.update(f.id, payload);
+        }catch(err){ toast('Could not save to backend: '+err.message, 'danger'); return; }
+        if(isNew) db2.faculty.push(saved);
+        else Object.assign(f, saved);
+        DataService.log(isNew?'Faculty added':'Faculty updated', saved.name);
+        DataService.save(); closeModal(); toast('Faculty saved.','success'); draw();
+      }}
+    ]);
+    document.querySelectorAll('#mfSubs .chip, #mfDays .chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+  }
+  page.querySelector('#btnAddFac').addEventListener('click', ()=>openFacultyModal(null));
+  draw();
+};
+
+/* ---- Subjects ---- */
+Renderers.subjects = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Subjects</h1><div class="section-sub">${db.subjects.length} subjects across ${db.departments.length} departments</div></div>
+      <div class="btnrow"><button class="btn btn-primary" id="btnAddSub">+ Add subject</button></div>
+    </div>
+    <div class="table-wrap card" style="padding:0;">
+      <table><thead><tr><th>Code</th><th>Name</th><th>Dept</th><th>Sem</th><th>Weekly hrs</th><th>Type</th><th></th></tr></thead>
+      <tbody id="subBody"></tbody></table>
+    </div>`;
+  const body = page.querySelector('#subBody');
+  function draw(){
+    const db2 = DataService.get();
+    body.innerHTML = db2.subjects.map(s=>`
+      <tr><td><b>${escapeHtml(s.code)}</b></td><td>${escapeHtml(s.name)}</td><td><span class="pill pill-info">${escapeHtml(s.dept)}</span></td>
+      <td>${s.sem}</td><td>${s.weeklyHours}</td><td>${s.isLab?'<span class="pill pill-warning">Lab</span>':'<span class="pill pill-muted">Theory</span>'}</td>
+      <td><button class="btn btn-sm" data-edit="${s.id}">Edit</button> <button class="btn btn-sm btn-danger" data-del="${s.id}">Delete</button></td></tr>
+    `).join('') || `<tr><td colspan="7"><div class="empty-state">No subjects yet.</div></td></tr>`;
+    body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openSubModal(b.dataset.edit)));
+    body.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+      const db3=DataService.get(); db3.subjects = db3.subjects.filter(x=>x.id!==b.dataset.del);
+      DataService.save(); toast('Subject removed.','success'); draw();
+    }));
+  }
+  function openSubModal(id){
+    const db2 = DataService.get(); const isNew = !id;
+    const s = isNew? {id:uid(), name:'', code:'', dept:db2.departments[0]?db2.departments[0].id:'', sem:1, weeklyHours:3, isLab:false, credits:3} : byId(db2.subjects,id);
+    const body = `
+      <div class="grid grid-2">
+        <div class="field"><label>Subject name</label><input type="text" id="msName" value="${escapeHtml(s.name)}"></div>
+        <div class="field"><label>Code</label><input type="text" id="msCode" value="${escapeHtml(s.code)}"></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="field"><label>Department</label><select id="msDept">${db2.departments.map(d=>`<option value="${d.id}" ${d.id===s.dept?'selected':''}>${escapeHtml(d.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>Semester</label><input type="number" id="msSem" value="${s.sem}" min="1" max="8"></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="field"><label>Weekly hours</label><input type="number" id="msHours" value="${s.weeklyHours}" min="1" max="8"></div>
+        <div class="field"><label>Type</label><select id="msType"><option value="theory" ${!s.isLab?'selected':''}>Theory</option><option value="lab" ${s.isLab?'selected':''}>Lab (needs lab room)</option></select></div>
+      </div>
+    `;
+    openModal(isNew?'Add subject':'Edit subject', body, [
+      {label:'Cancel', onClick:closeModal},
+      {label:'Save', cls:'btn-primary', onClick:()=>{
+        s.name = document.getElementById('msName').value.trim()||'Untitled subject';
+        s.code = document.getElementById('msCode').value.trim().toUpperCase()||'SUBJ';
+        s.dept = document.getElementById('msDept').value;
+        s.sem = parseInt(document.getElementById('msSem').value,10)||1;
+        s.weeklyHours = parseInt(document.getElementById('msHours').value,10)||3;
+        s.isLab = document.getElementById('msType').value==='lab';
+        if(isNew) db2.subjects.push(s);
+        DataService.log(isNew?'Subject added':'Subject updated', s.name);
+        DataService.save(); closeModal(); toast('Subject saved.','success'); draw();
+      }}
+    ]);
+  }
+  page.querySelector('#btnAddSub').addEventListener('click',()=>openSubModal(null));
+  draw();
+};
+
+/* ---- Classes / Divisions ---- */
+Renderers.classes = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Classes / Divisions</h1><div class="section-sub">Departments and divisions used across the scheduler</div></div>
+      <div class="btnrow"><button class="btn" id="btnAddDept">+ Department</button><button class="btn btn-primary" id="btnAddDiv">+ Division</button></div>
+    </div>
+    <div class="grid grid-2" style="align-items:start;">
+      <div class="card">
+        <h3>Departments</h3>
+        <div class="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th></th></tr></thead><tbody id="deptBody"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>Divisions</h3>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Dept</th><th>Sem</th><th>Strength</th><th></th></tr></thead><tbody id="divBody"></tbody></table></div>
+      </div>
+    </div>`;
+  function draw(){
+    const db2 = DataService.get();
+    page.querySelector('#deptBody').innerHTML = db2.departments.map(d=>`<tr><td><b>${escapeHtml(d.id)}</b></td><td>${escapeHtml(d.name)}</td><td><button class="btn btn-sm btn-danger" data-deld="${d.id}">Delete</button></td></tr>`).join('') || `<tr><td colspan="3"><div class="empty-state">No departments yet.</div></td></tr>`;
+    page.querySelector('#divBody').innerHTML = db2.divisions.map(d=>`<tr><td><b>${escapeHtml(d.name)}</b></td><td><span class="pill pill-info">${escapeHtml(d.dept)}</span></td><td>${d.sem}</td><td>${d.strength}</td><td><button class="btn btn-sm" data-edit="${d.id}">Edit</button> <button class="btn btn-sm btn-danger" data-del="${d.id}">Delete</button></td></tr>`).join('') || `<tr><td colspan="5"><div class="empty-state">No divisions yet.</div></td></tr>`;
+    page.querySelectorAll('[data-deld]').forEach(b=>b.addEventListener('click',()=>{ const db3=DataService.get(); db3.departments=db3.departments.filter(x=>x.id!==b.dataset.deld); DataService.save(); draw(); }));
+    page.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{ const db3=DataService.get(); db3.divisions=db3.divisions.filter(x=>x.id!==b.dataset.del); DataService.save(); toast('Division removed.','success'); draw(); }));
+    page.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openDivModal(b.dataset.edit)));
+  }
+  function openDivModal(id){
+    const db2 = DataService.get(); const isNew=!id;
+    const d = isNew? {id:uid(), name:'', dept:db2.departments[0]?db2.departments[0].id:'', sem:1, strength:60} : byId(db2.divisions,id);
+    openModal(isNew?'Add division':'Edit division', `
+      <div class="field"><label>Division name</label><input type="text" id="mdName" value="${escapeHtml(d.name)}" placeholder="e.g. CSE-3A"></div>
+      <div class="grid grid-2">
+        <div class="field"><label>Department</label><select id="mdDept">${db2.departments.map(x=>`<option value="${x.id}" ${x.id===d.dept?'selected':''}>${escapeHtml(x.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>Semester</label><input type="number" id="mdSem" value="${d.sem}" min="1" max="8"></div>
+      </div>
+      <div class="field"><label>Student strength</label><input type="number" id="mdStr" value="${d.strength}" min="1" max="300"></div>
+    `, [{label:'Cancel', onClick:closeModal},{label:'Save', cls:'btn-primary', onClick:()=>{
+      d.name = document.getElementById('mdName').value.trim()||'Division';
+      d.dept = document.getElementById('mdDept').value;
+      d.sem = parseInt(document.getElementById('mdSem').value,10)||1;
+      d.strength = parseInt(document.getElementById('mdStr').value,10)||60;
+      if(isNew) db2.divisions.push(d);
+      DataService.save(); closeModal(); toast('Division saved.','success'); draw();
+    }}]);
+  }
+  page.querySelector('#btnAddDept').addEventListener('click',()=>{
+    openModal('Add department', `<div class="field"><label>Code</label><input type="text" id="ndCode" placeholder="e.g. MECH"></div><div class="field"><label>Full name</label><input type="text" id="ndName"></div>`,
+      [{label:'Cancel', onClick:closeModal},{label:'Save', cls:'btn-primary', onClick:()=>{
+        const db2=DataService.get();
+        const code=document.getElementById('ndCode').value.trim().toUpperCase()||('DEPT'+(db2.departments.length+1));
+        db2.departments.push({id:code, name:document.getElementById('ndName').value.trim()||code});
+        DataService.save(); closeModal(); toast('Department added.','success'); draw();
+      }}]);
+  });
+  page.querySelector('#btnAddDiv').addEventListener('click',()=>openDivModal(null));
+  draw();
+};
+
+/* ---- Rooms & Labs ---- */
+Renderers.rooms = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Rooms & Labs</h1><div class="section-sub">${db.rooms.filter(r=>r.type==='room').length} rooms &middot; ${db.rooms.filter(r=>r.type==='lab').length} labs</div></div>
+      <div class="btnrow"><button class="btn btn-primary" id="btnAddRoom">+ Add room/lab</button></div>
+    </div>
+    <div class="table-wrap card" style="padding:0;">
+      <table><thead><tr><th>Name</th><th>Type</th><th>Dept</th><th>Capacity</th><th>Utilisation</th><th></th></tr></thead><tbody id="roomBody"></tbody></table>
+    </div>`;
+  function draw(){
+    const db2 = DataService.get();
+    const util = AIService.computeRoomUtil(db2);
+    page.querySelector('#roomBody').innerHTML = db2.rooms.map(r=>{
+      const u = util.find(x=>x.id===r.id);
+      return `<tr><td><b>${escapeHtml(r.name)}</b></td><td>${r.type==='lab'?'<span class="pill pill-warning">Lab</span>':'<span class="pill pill-muted">Room</span>'}</td>
+      <td><span class="pill pill-info">${escapeHtml(r.dept)}</span></td><td>${r.capacity}</td>
+      <td style="width:140px;"><div class="bar-track"><div class="bar-fill" style="width:${u?u.pct:0}%;"></div></div><span class="small">${u?u.pct:0}%</span></td>
+      <td><button class="btn btn-sm" data-edit="${r.id}">Edit</button> <button class="btn btn-sm btn-danger" data-del="${r.id}">Delete</button></td></tr>`;
+    }).join('') || `<tr><td colspan="6"><div class="empty-state">No rooms yet.</div></td></tr>`;
+    page.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openRoomModal(b.dataset.edit)));
+    page.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{ const db3=DataService.get(); db3.rooms=db3.rooms.filter(x=>x.id!==b.dataset.del); DataService.save(); toast('Room removed.','success'); draw(); }));
+  }
+  function openRoomModal(id){
+    const db2=DataService.get(); const isNew=!id;
+    const r = isNew? {id:uid(), name:'', type:'room', capacity:60, dept:db2.departments[0]?db2.departments[0].id:''} : byId(db2.rooms,id);
+    openModal(isNew?'Add room/lab':'Edit room/lab', `
+      <div class="field"><label>Name</label><input type="text" id="mrName" value="${escapeHtml(r.name)}"></div>
+      <div class="grid grid-2">
+        <div class="field"><label>Type</label><select id="mrType"><option value="room" ${r.type==='room'?'selected':''}>Room</option><option value="lab" ${r.type==='lab'?'selected':''}>Lab</option></select></div>
+        <div class="field"><label>Capacity</label><input type="number" id="mrCap" value="${r.capacity}" min="10" max="400"></div>
+      </div>
+      <div class="field"><label>Department</label><select id="mrDept">${db2.departments.map(d=>`<option value="${d.id}" ${d.id===r.dept?'selected':''}>${escapeHtml(d.name)}</option>`).join('')}</select></div>
+    `, [{label:'Cancel', onClick:closeModal},{label:'Save', cls:'btn-primary', onClick:()=>{
+      r.name = document.getElementById('mrName').value.trim()||'Room';
+      r.type = document.getElementById('mrType').value;
+      r.capacity = parseInt(document.getElementById('mrCap').value,10)||60;
+      r.dept = document.getElementById('mrDept').value;
+      if(isNew) db2.rooms.push(r);
+      DataService.save(); closeModal(); toast('Room saved.','success'); draw();
+    }}]);
+  }
+  page.querySelector('#btnAddRoom').addEventListener('click',()=>openRoomModal(null));
+  draw();
+};
+
+/* ---- Constraints ---- */
+Renderers.constraints = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head"><div><h1>Constraints</h1><div class="section-sub">Hard rules are always enforced; soft rules are optimized by weight.</div></div></div>
+    <div class="grid grid-2" style="align-items:start;">
+      <div class="card">
+        <h3>Hard constraints (always on)</h3>
+        <div id="hardList"></div>
+      </div>
+      <div class="card">
+        <h3>Soft constraint weights</h3>
+        <div id="softList"></div>
+        <button class="btn btn-sm" id="btnResetWeights" style="margin-top:8px;">Reset to defaults</button>
+      </div>
+    </div>`;
+  const hardItems = [
+    ['No faculty conflicts','A faculty member cannot teach two classes at once.'],
+    ['No room conflicts','A room/lab cannot host two sessions at once.'],
+    ['No class conflicts','A division cannot attend two sessions at once.'],
+    ['Room capacity sufficiency','Assigned room capacity must be ≥ class strength.'],
+    ['Lab-only for lab subjects','Lab subjects are scheduled only in lab rooms.'],
+    ['Faculty availability','Sessions respect each faculty member\'s available days and marked leave.'],
+    ['Required weekly hours','Every subject receives its full weekly hour allocation where feasible.'],
+  ];
+  page.querySelector('#hardList').innerHTML = hardItems.map(h=>`
+    <div style="padding:9px 0;border-bottom:1px solid var(--border);">
+      <div class="flex-between"><b style="font-size:13px;">${h[0]}</b><span class="pill pill-success">Enforced</span></div>
+      <div class="small">${h[1]}</div>
+    </div>`).join('');
+  function drawSoft(){
+    page.querySelector('#softList').innerHTML = db.constraints.soft.map(c=>`
+      <div style="margin-bottom:12px;">
+        <div class="flex-between"><span style="font-size:13px;">${escapeHtml(c.label)}</span><b class="small">${c.weight}</b></div>
+        <input type="range" min="0" max="100" value="${c.weight}" data-id="${c.id}" style="width:100%;">
+      </div>`).join('');
+    page.querySelectorAll('#softList input').forEach(r=>r.addEventListener('input',()=>{
+      byId(db.constraints.soft, r.dataset.id).weight = parseInt(r.value,10);
+      r.previousElementSibling.querySelector('b').textContent = r.value;
+      DataService.save();
+    }));
+  }
+  page.querySelector('#btnResetWeights').addEventListener('click',()=>{
+    [70,85,60,65,50,75].forEach((w,i)=> db.constraints.soft[i].weight = w);
+    DataService.save(); drawSoft(); toast('Weights reset to defaults.','success');
+  });
+  drawSoft();
+};
+
+/* ---- Conflict Detection ---- */
+Renderers.conflicts = function(page){
+  const db = DataService.get();
+  const conflicts = ConflictEngine.detect(db);
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Conflict Detection</h1><div class="section-sub">${conflicts.length} issue(s) found in the active timetable</div></div>
+      <div class="btnrow"><button class="btn" id="btnRescan">Re-scan</button></div>
+    </div>
+    <div id="conflictList"></div>`;
+  const list = page.querySelector('#conflictList');
+  if(!conflicts.length){
+    list.innerHTML = emptyState('No conflicts', 'The current timetable satisfies all hard constraints.', true);
+  } else {
+    list.innerHTML = `<div class="grid grid-2">` + conflicts.map(c=>`
+      <div class="card">
+        <div class="flex-between"><span class="pill ${c.severity==='high'?'pill-danger':'pill-warning'}">${escapeHtml(c.type)}</span><span class="small">${c.day} ${c.pid}</span></div>
+        <p style="margin-top:8px;font-size:13px;">${escapeHtml(c.text)}</p>
+        <div class="btnrow">
+          <button class="btn btn-sm" data-goto="${c.divisionId}">View in timetable</button>
+          <button class="btn btn-sm btn-primary" data-resolve="${c.divisionId}|${c.day}|${c.pid}">Suggest fix</button>
+        </div>
+      </div>`).join('') + `</div>`;
+    list.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>App.navigate('timetable')));
+    list.querySelectorAll('[data-resolve]').forEach(b=>b.addEventListener('click',()=>{
+      const [divId, day, pid] = b.dataset.resolve.split('|');
+      suggestFix(divId, day, pid);
+    }));
+  }
+  page.querySelector('#btnRescan').addEventListener('click', App.refresh.bind(App));
+};
+function suggestFix(divisionId, day, pid){
+  const db = DataService.get();
+  const div = byId(db.divisions, divisionId);
+  const cell = db.timetables[divisionId] && db.timetables[divisionId][day] && db.timetables[divisionId][day][pid];
+  if(!cell){ toast('This slot has already changed.', 'warning'); return; }
+  const sub = byId(db.subjects, cell.subjectId);
+  const periods = Generator.slotList(db.meta);
+  let suggestion = null;
+  outer: for(const d of db.meta.workingDays){
+    for(const p of periods){
+      if(d===day && p===pid) continue;
+      const busyDiv = db.timetables[divisionId][d] && db.timetables[divisionId][d][p];
+      if(busyDiv) continue;
+      const eligibleFac = db.faculty.filter(f=>f.subjects.includes(sub.id));
+      for(const fac of eligibleFac){
+        if(fac.availDays && !fac.availDays.includes(d)) continue;
+        let facBusy=false, roomFree=null;
+        db.divisions.forEach(dv=>{ const c=db.timetables[dv.id] && db.timetables[dv.id][d] && db.timetables[dv.id][d][p]; if(c && c.facultyId===fac.id) facBusy=true; });
+        if(facBusy) continue;
+        const candidateRooms = db.rooms.filter(r=> (sub.isLab? r.type==='lab': r.type!=='lab') && r.capacity>=div.strength);
+        for(const room of candidateRooms){
+          let roomBusy=false;
+          db.divisions.forEach(dv=>{ const c=db.timetables[dv.id] && db.timetables[dv.id][d] && db.timetables[dv.id][d][p]; if(c && c.roomId===room.id) roomBusy=true; });
+          if(!roomBusy){ roomFree = room; break; }
+        }
+        if(roomFree){ suggestion = {day:d, pid:p, facultyId:fac.id, roomId:roomFree.id}; break outer; }
+      }
+    }
+  }
+  if(!suggestion){ toast('No conflict-free alternative slot found automatically — try manual drag-and-drop.', 'warning', 'No fix found'); return; }
+  const fac = byId(db.faculty, suggestion.facultyId), room = byId(db.rooms, suggestion.roomId);
+  openModal('Suggested fix', `
+    <p>Move <b>${escapeHtml(sub.name)}</b> for <b>${escapeHtml(div.name)}</b> from ${day} ${pid} to:</p>
+    <p style="font-size:15px;"><b>${suggestion.day} ${suggestion.pid}</b> with ${escapeHtml(fac.name)} in ${escapeHtml(room.name)}</p>
+    <p class="small">This slot is free of faculty, room and class conflicts and meets capacity/type requirements.</p>
+  `, [{label:'Cancel', onClick:closeModal},{label:'Apply fix', cls:'btn-primary', onClick:()=>{
+    db.timetables[divisionId][day][pid] = null; delete db.timetables[divisionId][day][pid];
+    db.timetables[divisionId][suggestion.day] = db.timetables[divisionId][suggestion.day]||{};
+    db.timetables[divisionId][suggestion.day][suggestion.pid] = {subjectId:sub.id, facultyId:suggestion.facultyId, roomId:suggestion.roomId};
+    DataService.log('Conflict resolved', `${sub.name} moved to ${suggestion.day} ${suggestion.pid}`);
+    DataService.save(); closeModal(); toast('Conflict resolved.', 'success'); App.navigate('conflicts');
+  }}]);
+}
+
+/* ---- What-If Simulator ---- */
+Renderers.whatif = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head"><div><h1>What-If Simulator</h1><div class="section-sub">Preview the impact of a faculty, room, or lab becoming unavailable — without changing the live timetable.</div></div></div>
+    <div class="grid grid-3" style="align-items:start;">
+      <div class="card">
+        <h3>Simulate</h3>
+        <div class="field"><label>Scenario type</label><select id="wiType"><option value="faculty">Faculty unavailable</option><option value="room">Room/Lab unavailable</option></select></div>
+        <div class="field" id="wiTargetWrap"><label>Faculty</label><select id="wiTarget"></select></div>
+        <div class="field" id="wiDayWrap"><label>Day (optional — leave blank for whole week)</label><select id="wiDay"><option value="">All days</option>${db.meta.workingDays.map(d=>`<option value="${d}">${d}</option>`).join('')}</select></div>
+        <button class="btn btn-primary" id="btnRunSim" style="width:100%;justify-content:center;">Run simulation</button>
+      </div>
+      <div class="card" style="grid-column:span 2;">
+        <h3>Impact report</h3>
+        <div id="wiResult"><div class="empty-state">Choose a scenario and run the simulation to see impact.</div></div>
+      </div>
+    </div>`;
+  const typeSel = page.querySelector('#wiType'), targetSel = page.querySelector('#wiTarget');
+  function refreshTargets(){
+    if(typeSel.value==='faculty') targetSel.innerHTML = db.faculty.map(f=>`<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('');
+    else targetSel.innerHTML = db.rooms.map(r=>`<option value="${r.id}">${escapeHtml(r.name)} (${r.type})</option>`).join('');
+  }
+  typeSel.addEventListener('change', refreshTargets); refreshTargets();
+
+  page.querySelector('#btnRunSim').addEventListener('click', ()=>{
+    const type = typeSel.value, targetId = targetSel.value, day = page.querySelector('#wiDay').value;
+    const periods = Generator.slotList(db.meta);
+    let affected = [];
+    db.divisions.forEach(div=>{
+      const tt = db.timetables[div.id]; if(!tt) return;
+      db.meta.workingDays.forEach(d=>{
+        if(day && d!==day) return;
+        periods.forEach(pid=>{
+          const cell = tt[d] && tt[d][pid]; if(!cell) return;
+          if(type==='faculty' && cell.facultyId===targetId) affected.push({div,d,pid,cell});
+          if(type==='room' && cell.roomId===targetId) affected.push({div,d,pid,cell});
+        });
+      });
+    });
+    const result = page.querySelector('#wiResult');
+    if(!affected.length){ result.innerHTML = emptyState('No impact', 'This scenario does not affect any currently scheduled session.', true); return; }
+
+    let rows = affected.map(a=>{
+      const sub = byId(db.subjects, a.cell.subjectId), fac = byId(db.faculty, a.cell.facultyId), room = byId(db.rooms, a.cell.roomId);
+      let suggestion = 'No clean alternative found';
+      if(type==='faculty'){
+        const subs = AIService.suggestSubstitutes(db, targetId).filter(s=> byId(db.faculty,s.id).subjects.includes(sub.id));
+        if(subs.length) suggestion = `Substitute: ${subs[0].name}`;
+      } else {
+        const altRooms = db.rooms.filter(r=> r.id!==targetId && (sub.isLab? r.type==='lab': r.type!=='lab') && r.capacity>=a.div.strength);
+        if(altRooms.length) suggestion = `Move to: ${altRooms[0].name}`;
+      }
+      return `<tr><td>${a.d} ${a.pid}</td><td>${escapeHtml(a.div.name)}</td><td>${escapeHtml(sub?sub.name:'')}</td><td>${escapeHtml(fac?fac.name:'')}</td><td>${escapeHtml(room?room.name:'')}</td><td class="small">${escapeHtml(suggestion)}</td></tr>`;
+    }).join('');
+    result.innerHTML = `
+      <div class="grid grid-3" style="margin-bottom:12px;">
+        <div class="stat s-danger"><div class="label">Sessions affected</div><div class="value">${affected.length}</div></div>
+        <div class="stat s-info"><div class="label">Divisions impacted</div><div class="value">${new Set(affected.map(a=>a.div.id)).size}</div></div>
+        <div class="stat s-primary"><div class="label">Days affected</div><div class="value">${new Set(affected.map(a=>a.d)).size}</div></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Slot</th><th>Division</th><th>Subject</th><th>Faculty</th><th>Room</th><th>Suggested action</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="btnrow" style="margin-top:12px;"><button class="btn btn-primary" id="btnLogSim">Log this scenario</button></div>
+    `;
+    result.querySelector('#btnLogSim').addEventListener('click',()=>{
+      db.whatifLog.unshift({ts:new Date().toISOString(), type, targetId, day, affected: affected.length});
+      DataService.log('What-if scenario logged', `${type} unavailable: ${affected.length} sessions affected`);
+      DataService.save(); toast('Scenario logged for reference.', 'success');
+    });
+  });
+};
+
+/* ---- Faculty Workload ---- */
+Renderers.workload = function(page){
+  const db = DataService.get();
+  const wl = AIService.computeWorkload(db);
+  page.innerHTML = `
+    <div class="section-head"><div><h1>Faculty Workload</h1><div class="section-sub">Weekly teaching hours vs configured maximum</div></div></div>
+    <div class="card" style="margin-bottom:16px;"><div class="canvaswrap"><canvas id="wlChart" height="260"></canvas></div></div>
+    <div class="table-wrap card" style="padding:0;">
+      <table><thead><tr><th>Faculty</th><th>Hours / week</th><th>Max</th><th>Utilisation</th><th>Status</th></tr></thead>
+      <tbody>${wl.map(w=>`<tr><td><b>${escapeHtml(w.name)}</b></td><td>${w.hours}</td><td>${w.max}</td>
+        <td style="width:160px;"><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,w.pct)}%;background:${w.pct>=90?'var(--danger)':w.pct>=70?'var(--accent)':'var(--success)'};"></div></div></td>
+        <td>${w.pct>=90?'<span class="pill pill-danger">Overloaded</span>':w.pct>=70?'<span class="pill pill-warning">High</span>':w.pct===0?'<span class="pill pill-muted">Unassigned</span>':'<span class="pill pill-success">Balanced</span>'}</td></tr>`).join('') || `<tr><td colspan="5"><div class="empty-state">No faculty yet.</div></td></tr>`}
+      </tbody></table>
+    </div>`;
+  drawBarChart('wlChart', wl.map(w=>({label:w.name.split(' ').pop(), value:w.hours, max:Math.max(w.max, ...wl.map(x=>x.max))})));
+};
+
+/* ---- Exam Scheduler ---- */
+Renderers.exams = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head">
+      <div><h1>Exam Scheduler</h1><div class="section-sub">${db.exams.length} exam(s) scheduled</div></div>
+      <div class="btnrow"><button class="btn btn-primary" id="btnGenExam">Auto-generate exam schedule</button></div>
+    </div>
+    <div class="table-wrap card" style="padding:0;">
+      <table><thead><tr><th>Date</th><th>Time</th><th>Subject</th><th>Division</th><th>Room</th><th>Invigilator</th></tr></thead>
+      <tbody id="examBody"></tbody></table>
+    </div>`;
+  function draw(){
+    const db2 = DataService.get();
+    page.querySelector('#examBody').innerHTML = db2.exams.map(e=>`
+      <tr><td>${e.date}</td><td>${e.time}</td><td>${escapeHtml(byId(db2.subjects,e.subjectId)?.name||'')}</td>
+      <td>${escapeHtml(byId(db2.divisions,e.divisionId)?.name||'')}</td><td>${escapeHtml(byId(db2.rooms,e.roomId)?.name||'')}</td>
+      <td>${escapeHtml(byId(db2.faculty,e.invigilatorId)?.name||'Unassigned')}</td></tr>`).join('') ||
+      `<tr><td colspan="6"><div class="empty-state">No exams scheduled yet. Click "Auto-generate exam schedule".</div></td></tr>`;
+  }
+  page.querySelector('#btnGenExam').addEventListener('click', ()=>{
+    const db2 = DataService.get();
+    if(!db2.subjects.length || !db2.divisions.length || !db2.rooms.length){ toast('Add subjects, divisions and rooms first.', 'danger'); return; }
+    db2.exams = [];
+    const startDate = new Date(); startDate.setDate(startDate.getDate()+7);
+    const slots = ['10:00 AM - 01:00 PM','02:00 PM - 05:00 PM'];
+    let dayOffset = 0, slotIdx = 0;
+    const usedRoomSlot = {};
+    db2.divisions.forEach(div=>{
+      const subs = db2.subjects.filter(s=>s.dept===div.dept && s.sem===div.sem && !s.isLab);
+      subs.forEach(sub=>{
+        const date = new Date(startDate); date.setDate(date.getDate()+dayOffset);
+        const dateStr = date.toISOString().slice(0,10);
+        const time = slots[slotIdx % slots.length];
+        let room = db2.rooms.find(r=> r.type==='room' && r.capacity>=div.strength && !usedRoomSlot[dateStr+time+r.id]);
+        if(!room) room = db2.rooms[0];
+        usedRoomSlot[dateStr+time+room.id]=true;
+        const eligibleFac = db2.faculty.filter(f=>f.dept!==div.dept);
+        const invig = eligibleFac.length? eligibleFac[Math.floor(Math.random()*eligibleFac.length)] : db2.faculty[0];
+        db2.exams.push({id:uid(), date:dateStr, time, subjectId:sub.id, divisionId:div.id, roomId:room.id, invigilatorId: invig?invig.id:null});
+        slotIdx++;
+        if(slotIdx % slots.length === 0) dayOffset++;
+      });
+    });
+    DataService.log('Exam schedule generated', `${db2.exams.length} exam sessions created`);
+    DataService.save(); toast('Exam timetable generated with invigilator allocation.', 'success'); draw();
+  });
+  draw();
+};
+
+/* ---- Analytics ---- */
+Renderers.analytics = function(page){
+  const db = DataService.get();
+  const util = AIService.computeRoomUtil(db);
+  const wl = AIService.computeWorkload(db);
+  const deptCounts = {};
+  db.subjects.forEach(s=> deptCounts[s.dept] = (deptCounts[s.dept]||0)+s.weeklyHours);
+  page.innerHTML = `
+    <div class="section-head"><div><h1>Analytics</h1><div class="section-sub">Cross-cutting scheduling insights</div></div></div>
+    <div class="grid grid-2" style="align-items:start;">
+      <div class="card"><h3>Subject hours by department</h3><div class="canvaswrap"><canvas id="anDept" height="220"></canvas></div></div>
+      <div class="card"><h3>Room utilisation</h3><div class="canvaswrap"><canvas id="anRoom" height="220"></canvas></div></div>
+      <div class="card"><h3>Faculty workload distribution</h3><div class="canvaswrap"><canvas id="anWl" height="220"></canvas></div></div>
+      <div class="card">
+        <h3>Key ratios</h3>
+        <div class="grid grid-2">
+          <div class="stat s-primary"><div class="label">Faculty : Division ratio</div><div class="value">${db.divisions.length? (db.faculty.length/db.divisions.length).toFixed(1):'-'}</div></div>
+          <div class="stat s-info"><div class="label">Avg room utilisation</div><div class="value">${util.length?Math.round(util.reduce((a,b)=>a+b.pct,0)/util.length):0}%</div></div>
+          <div class="stat s-success"><div class="label">Avg faculty load</div><div class="value">${wl.length?Math.round(wl.reduce((a,b)=>a+b.hours,0)/wl.length):0}h</div></div>
+          <div class="stat s-danger"><div class="label">Overloaded faculty</div><div class="value">${wl.filter(w=>w.pct>=90).length}</div></div>
+        </div>
+      </div>
+    </div>`;
+  drawBarChart('anDept', Object.entries(deptCounts).map(([k,v])=>({label:k,value:v,max:Math.max(...Object.values(deptCounts),1)})));
+  drawBarChart('anRoom', util.slice(0,10).map(u=>({label:u.name.replace('Lab-','L'),value:u.pct,max:100})));
+  drawBarChart('anWl', wl.map(w=>({label:w.name.split(' ').pop(), value:w.hours, max:Math.max(...wl.map(x=>x.max),1)})));
+};
+
+/* ---- AI Assistant ---- */
+Renderers.ai = function(page){
+  page.innerHTML = `
+    <div class="section-head"><div><h1>AI Scheduling Assistant</h1><div class="section-sub">Ask about the timetable in plain language. Answers use your actual scheduling data.</div></div></div>
+    <div class="ai-wrap">
+      <div class="card" style="padding:0;display:flex;flex-direction:column;">
+        <div id="chatLog" class="scrollbar"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Ask me anything about the timetable&hellip;">
+          <button class="btn btn-primary" id="chatSend">Send</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Try asking</h3>
+        <button class="suggest-chip" data-q="Show today's timetable">Show today's timetable</button>
+        <button class="suggest-chip" data-q="Which faculty is overloaded?">Which faculty is overloaded?</button>
+        <button class="suggest-chip" data-q="What happens if Lab-2 is unavailable?">What happens if Lab-2 is unavailable?</button>
+        <button class="suggest-chip" data-q="Show conflicts">Show conflicts</button>
+        <button class="suggest-chip" data-q="Why was Java Programming assigned to Monday?">Why was Java assigned to Monday?</button>
+        <div class="small" style="margin-top:8px;">This demo uses a local rule-based engine. AIService.callBackend() is ready to be pointed at a secure server endpoint for a real LLM — never place API keys in frontend code.</div>
+      </div>
+    </div>`;
+  const log = page.querySelector('#chatLog');
+  function addMsg(html, who){
+    log.appendChild(el(`<div class="msg ${who}">${html}</div>`));
+    log.scrollTop = log.scrollHeight;
+  }
+  addMsg("Hi, I'm your scheduling assistant. Ask me about today's timetable, faculty workload, conflicts, or what-if scenarios.", 'bot');
+
+  let pendingAction = null;
+  function handle(text){
+    if(!text.trim()) return;
+    addMsg(escapeHtml(text), 'user');
+    const db = DataService.get();
+    if(pendingAction && /^(yes|y|confirm|ok|proceed)/i.test(text.trim())){
+      applyPendingAction(pendingAction, db);
+      pendingAction = null; return;
+    }
+    if(pendingAction && /^(no|n|cancel)/i.test(text.trim())){
+      addMsg('Okay, no changes made.', 'bot'); pendingAction = null; return;
+    }
+    const res = AIService.answer(db, text);
+    if(res && typeof res === 'object' && res.confirm){
+      pendingAction = res.action;
+      addMsg(res.text, 'bot');
+    } else {
+      addMsg(res, 'bot');
+    }
+  }
+  function applyPendingAction(action, db){
+    if(action.type==='markUnavailable'){
+      const fac = byId(db.faculty, action.facultyId);
+      const periods = Generator.slotList(db.meta);
+      fac.unavailable = fac.unavailable||[];
+      periods.forEach(pid=>{ if(!fac.unavailable.some(u=>u.day===action.day&&u.periodId===pid)) fac.unavailable.push({day:action.day, periodId:pid}); });
+      fac.availDays = fac.availDays.filter(d=>d!==action.day);
+      DataService.log('Faculty marked unavailable', `${fac.name} on ${action.day}`);
+      DataService.notify('Faculty availability changed', `${fac.name} unavailable ${action.day}`, 'warning');
+      DataService.save();
+      const conflicts = ConflictEngine.detect(db).filter(c=>c.day===action.day);
+      addMsg(`Done. ${fac.name} is now marked unavailable on ${action.day}. ${conflicts.length? `This creates ${conflicts.length} conflict(s) — check Conflict Detection to resolve them.` : 'No existing sessions were affected.'}`, 'bot');
+      refreshNotifDropdown();
+    }
+  }
+  page.querySelector('#chatSend').addEventListener('click', ()=>{ const i=page.querySelector('#chatInput'); handle(i.value); i.value=''; });
+  page.querySelector('#chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ handle(e.target.value); e.target.value=''; }});
+  page.querySelectorAll('.suggest-chip').forEach(b=>b.addEventListener('click', ()=> handle(b.dataset.q)));
+};
+
+/* ---- Settings ---- */
+Renderers.settings = function(page){
+  const db = DataService.get();
+  page.innerHTML = `
+    <div class="section-head"><div><h1>Settings</h1><div class="section-sub">Institute preferences, data management &amp; system logs</div></div></div>
+    <div class="grid grid-2" style="align-items:start;">
+      <div class="card">
+        <h3>Institute</h3>
+        <div class="field"><label>Organisation name</label><input type="text" id="stOrg" value="${escapeHtml(db.meta.orgName)}"></div>
+        <div class="field"><label>Theme</label>
+          <select id="stTheme"><option value="light" ${db.meta.theme!=='dark'?'selected':''}>Light</option><option value="dark" ${db.meta.theme==='dark'?'selected':''}>Dark</option></select>
+        </div>
+        <div class="field"><label>Max consecutive same-subject lectures</label><input type="number" id="stMaxConsec" value="${db.meta.maxConsecutive}" min="1" max="4"></div>
+        <button class="btn btn-primary" id="btnSaveSettings">Save settings</button>
+      </div>
+      <div class="card">
+        <h3>Period timings</h3>
+        <div class="table-wrap"><table><thead><tr><th>Label</th><th>Start</th><th>End</th><th>Break?</th></tr></thead>
+        <tbody>${db.meta.periods.map((p,i)=>`<tr><td>${p.label}</td>
+          <td><input type="time" data-i="${i}" data-f="start" value="${p.start}" style="border:1px solid var(--border);border-radius:5px;padding:3px;background:var(--bg);color:var(--text);"></td>
+          <td><input type="time" data-i="${i}" data-f="end" value="${p.end}" style="border:1px solid var(--border);border-radius:5px;padding:3px;background:var(--bg);color:var(--text);"></td>
+          <td>${p.isBreak?'Yes':'No'}</td></tr>`).join('')}</tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>Data management</h3>
+        <div class="btnrow" style="flex-direction:column;align-items:stretch;">
+          <button class="btn btn-accent" id="btnLoadDemo2">Load Demo Data</button>
+          <button class="btn" id="btnImportCSV">Import CSV (subjects)</button>
+          <input type="file" id="csvFile" accept=".csv" style="display:none;">
+          <button class="btn" id="btnExportAll">Export full dataset (JSON)</button>
+          <button class="btn btn-danger" id="btnResetAll">Reset all data</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Version history</h3>
+        <div id="verList" style="max-height:220px;overflow:auto;"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>Audit log</h3>
+      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Details</th></tr></thead>
+      <tbody>${db.auditLog.slice(0,40).map(a=>`<tr><td class="small">${new Date(a.ts).toLocaleString()}</td><td>${escapeHtml(a.action)}</td><td class="small">${escapeHtml(a.details||'')}</td></tr>`).join('') || '<tr><td colspan="3"><div class="empty-state">No activity logged yet.</div></td></tr>'}</tbody></table></div>
+    </div>`;
+
+  page.querySelector('#verList').innerHTML = db.versions.length? db.versions.slice(0,15).map(v=>`
+    <div style="padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+      <div><b>${escapeHtml(v.label)}</b></div><div class="small">${new Date(v.ts).toLocaleString()}</div>
+    </div>`).join('') : '<div class="small">No saved versions yet — apply a generated timetable option to create one.</div>';
+
+  page.querySelector('#btnSaveSettings').addEventListener('click', ()=>{
+    db.meta.orgName = page.querySelector('#stOrg').value.trim()||db.meta.orgName;
+    const theme = page.querySelector('#stTheme').value; db.meta.theme = theme; applyTheme(theme);
+    db.meta.maxConsecutive = parseInt(page.querySelector('#stMaxConsec').value,10)||3;
+    DataService.log('Settings updated','Institute preferences changed');
+    DataService.save(); toast('Settings saved.', 'success');
+  });
+  page.querySelectorAll('[data-f]').forEach(inp=>inp.addEventListener('change', ()=>{
+    db.meta.periods[inp.dataset.i][inp.dataset.f] = inp.value; DataService.save();
+  }));
+  page.querySelector('#btnLoadDemo2').addEventListener('click', loadDemoFlow);
+  page.querySelector('#btnResetAll').addEventListener('click', ()=>{
+    openModal('Reset all data?', '<p>This clears every department, division, subject, faculty member, room and generated timetable. This cannot be undone.</p>',
+      [{label:'Cancel', onClick:closeModal},{label:'Reset everything', cls:'btn-danger', onClick:()=>{ DataService.reset(); closeModal(); toast('All data has been reset.', 'success'); App.refresh(); }}]);
+  });
+  page.querySelector('#btnExportAll').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='chronos_dataset.json'; a.click(); URL.revokeObjectURL(url);
+    toast('Full dataset exported as JSON.', 'success');
+  });
+  page.querySelector('#btnImportCSV').addEventListener('click', ()=> page.querySelector('#csvFile').click());
+  page.querySelector('#csvFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const lines = reader.result.split(/\r?\n/).filter(l=>l.trim());
+        let added = 0;
+        lines.slice(1).forEach(line=>{
+          const cols = line.split(',').map(c=>c.replace(/^"|"$/g,'').trim());
+          if(cols.length<6) return;
+          const [name, code, dept, sem, hours, type] = cols;
+          if(!name) return;
+          db.subjects.push({id:uid(), name, code:(code||name.slice(0,4)).toUpperCase(), dept:dept||db.departments[0]?.id, sem:parseInt(sem,10)||1, weeklyHours:parseInt(hours,10)||3, isLab:/lab/i.test(type||''), credits:3});
+          added++;
+        });
+        DataService.log('CSV import', `${added} subjects imported`);
+        DataService.save(); toast(`${added} subjects imported from CSV.`, 'success'); App.refresh();
+      }catch(err){ toast('Could not parse that CSV file.', 'danger'); }
+    };
+    reader.readAsText(file);
+  });
+};
+
+/* ---------------------------------------------------------------
+   10. Small canvas bar-chart helper (no external chart library)
+---------------------------------------------------------------- */
+function drawBarChart(canvasId, data){
+  const canvas = document.getElementById(canvasId); if(!canvas) return;
+  const ratio = window.devicePixelRatio || 1;
+  const cssW = canvas.parentElement.clientWidth || 500;
+  const cssH = parseInt(canvas.getAttribute('height'),10) || 220;
+  canvas.width = cssW*ratio; canvas.height = cssH*ratio; canvas.style.width='100%'; canvas.style.height=cssH+'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(ratio, ratio);
+  ctx.clearRect(0,0,cssW,cssH);
+  if(!data.length){ ctx.fillStyle = getCss('--text-faint'); ctx.font='13px sans-serif'; ctx.fillText('No data to display', 10, cssH/2); return; }
+  const padL=34, padB=34, padT=12, padR=10;
+  const w = cssW-padL-padR, h = cssH-padT-padB;
+  const barW = w/data.length;
+  const maxVal = Math.max(...data.map(d=>d.max||d.value||1), 1);
+  ctx.strokeStyle = getCss('--border'); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+h); ctx.lineTo(padL+w, padT+h); ctx.stroke();
+  ctx.fillStyle = getCss('--text-faint'); ctx.font = '10px sans-serif'; ctx.textAlign='right';
+  for(let g=0; g<=4; g++){
+    const val = Math.round(maxVal*g/4);
+    const y = padT+h-(h*g/4);
+    ctx.fillText(val, padL-6, y+3);
+    ctx.strokeStyle = getCss('--border'); ctx.globalAlpha=.5;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+w,y); ctx.stroke(); ctx.globalAlpha=1;
+  }
+  const primary = getCss('--primary'), accent = getCss('--accent');
+  data.forEach((d,i)=>{
+    const bh = (d.value/maxVal)*h;
+    const x = padL + i*barW + barW*0.2;
+    const bw = barW*0.6;
+    const y = padT+h-bh;
+    const grad = ctx.createLinearGradient(0,y,0,padT+h);
+    grad.addColorStop(0, accent); grad.addColorStop(1, primary);
+    ctx.fillStyle = grad;
+    roundRect(ctx, x, y, bw, bh, 3); ctx.fill();
+    ctx.fillStyle = getCss('--text-dim'); ctx.font='10px sans-serif'; ctx.textAlign='center';
+    ctx.save();
+    ctx.translate(x+bw/2, padT+h+14);
+    const label = (d.label||'').toString().slice(0,8);
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+}
+function roundRect(ctx,x,y,w,h,r){
+  if(h<0){ y=y+h; h=Math.abs(h); }
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function getCss(varName){ return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#888'; }
+
+function emptyState(title, sub, ok){
+  return `<div class="empty-state"><div class="ic">${ok?'&#9989;':'&#128203;'}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(sub)}</p></div>`;
+}
+
+/* ---------------------------------------------------------------
+   11. BOOT
+---------------------------------------------------------------- */
+window.addEventListener('resize', ()=>{
+  // redraw charts on resize if on a page that has them
+  if(App.route) App.refresh();
+});
+document.addEventListener('DOMContentLoaded', ()=> App.init());
+</script>
+</body>
+</html>
